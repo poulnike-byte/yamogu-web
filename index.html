@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ЯмогУ!</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ЯмогУ!">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1D765C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>
+:root{--ink:#17221F;--paper:#EDF3EE;--panel:#fff;--line:#D9E4DC;--green:#1D765C;--soft:#DFF1E8;--orange:#D77935;--osoft:#FFF0DF;--muted:#718079}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font:16px/1.4 -apple-system,system-ui,"Segoe UI",Arial,sans-serif;
+  padding-top:env(safe-area-inset-top);-webkit-user-select:none;user-select:none}
+#app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
+header h1{margin:0;font-size:22px}
+.stats{display:flex;gap:8px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}
+main{flex:1;padding:0 16px 96px;overflow-y:auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 4px;font-size:17px}
+.card p{margin:0 0 8px;color:var(--muted);font-size:14px;white-space:pre-line}
+.rew{font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;border:0;border-radius:14px;padding:11px 16px;background:var(--green);color:#fff;cursor:pointer}
+button.sec{background:var(--soft);color:var(--green)}
+button.warn{background:var(--osoft);color:var(--orange)}
+button.big{width:100%;padding:14px}
+button:disabled{opacity:.4}
+h2{font-size:18px;margin:18px 0 10px}
+.empty{color:var(--muted);text-align:center;padding:30px 10px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);
+  display:flex;padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;color:var(--muted);padding:8px 4px;font-size:12px}
+nav button.on{color:var(--green)}
+nav button b{display:block;font-size:22px}
+input,textarea,select{font:inherit;width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;color:var(--ink);-webkit-user-select:text;user-select:text}
+label{font-size:13px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.sheet{background:var(--paper);width:100%;max-width:520px;max-height:90%;overflow-y:auto;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}
+.pin{font-size:30px;letter-spacing:10px;text-align:center}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;z-index:20;font-weight:700}
+.badge{display:inline-block;background:var(--orange);color:#fff;border-radius:999px;font-size:12px;padding:1px 8px;margin-left:4px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+// ---- Хранилище (на устройстве, localStorage) ----
+const KEY='yamogu_v1';
+const CATALOG=[
+ {t:'Подготовить одежду на завтра',d:'',c:10},
+ {t:'Комната перед сном',d:'1. Форма на завтра на вешалке.\n2. Игрушки и книжки на полки.',c:20},
+ {t:'Уроки',d:'1. Сначала сложное, потом лёгкое.\n2. Решаем на черновике, переписываем на чистовик.',c:30},
+ {t:'Собрать портфель и сумку на занятие',d:'1. Собрать портфель в школу.\n2. Сумка на занятие собрана в коридоре.',c:20},
+ {t:'Вечер: зубы и душ',d:'1. Почистить зубы.\n2. Принять душ.',c:10},
+ {t:'Почитать перед сном',d:'Почитать оставшееся время до 21:30.',c:10},
+ {t:'Вынести мусор',d:'',c:10},
+ {t:'Пропылесосить комнату',d:'',c:20},
+ {t:'Протереть пыль',d:'Стереть пыль со стола и стеллажа.',c:10},
+ {t:'Помочь с ужином',d:'1. Накрыть на ужин.\n2. Сполоснуть тарелку и приборы, поставить в посудомойку.',c:20}
+];
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.tasks)return s}catch(e){}
+  return{tasks:[],xp:0,coins:0,wishes:[],pin:null,spent:[]};
+}
+let S=load();
+const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---- Правила (как TaskRepositoryRules.kt) ----
+function submit(id){const t=S.tasks.find(x=>x.id===id&&x.status==='AVAILABLE');if(!t)return;t.status='WAITING_APPROVAL';save()}
+function reject(id){const t=S.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(!t)return;t.status='AVAILABLE';save()}
+function approve(id){ // награда выдаётся ровно один раз
+  const t=S.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(!t)return;
+  t.status='COMPLETED';S.xp+=t.xp;S.coins+=t.coins;save();
+}
+function del(id){const i=S.tasks.findIndex(x=>x.id===id&&x.status==='AVAILABLE');if(i>=0){S.tasks.splice(i,1);save()}}
+
+// ---- PIN (соль + SHA-256) ----
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function setPin(p){const salt=uid();S.pin={salt,hash:await sha(salt+p)};save()}
+async function checkPin(p){return S.pin&&await sha(S.pin.salt+p)===S.pin.hash}
+
+// ---- UI ----
+let tab='tasks', parentUnlocked=false;
+const $app=document.getElementById('app');
+function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),1800)}
+function modal(html){const m=document.createElement('div');m.className='modal';m.innerHTML='<div class="sheet">'+html+'</div>';
+  m.addEventListener('click',e=>{if(e.target===m)m.remove()});document.body.appendChild(m);return m}
+
+function render(){
+  const waiting=S.tasks.filter(t=>t.status==='WAITING_APPROVAL').length;
+  $app.innerHTML=`<header><h1>ЯмогУ!</h1><div class="stats"><span class="chip">⭐ ${S.xp}</span><span class="chip">🪙 ${S.coins}</span></div></header>
+  <main>${tab==='tasks'?viewTasks():tab==='shop'?viewShop():viewParent()}</main>
+  <nav>
+   <button data-tab="tasks" class="${tab==='tasks'?'on':''}"><b>✅</b>Задания</button>
+   <button data-tab="shop" class="${tab==='shop'?'on':''}"><b>🎁</b>Желания</button>
+   <button data-tab="parent" class="${tab==='parent'?'on':''}"><b>🔑</b>Родитель${waiting&&parentUnlocked?'<span class="badge">'+waiting+'</span>':''}</button>
+  </nav>`;
+}
+function rew(t){return `⭐ ${t.xp} · 🪙 ${t.coins}`}
+
+function viewTasks(){
+  const av=S.tasks.filter(t=>t.status==='AVAILABLE'),wa=S.tasks.filter(t=>t.status==='WAITING_APPROVAL'),co=S.tasks.filter(t=>t.status==='COMPLETED');
+  let h='';
+  if(!S.tasks.length)h='<div class="empty">Пока нет заданий.<br>Попроси родителя добавить их во вкладке «Родитель».</div>';
+  if(av.length){h+='<h2>Сегодня</h2>';av.forEach(t=>h+=`<div class="card"><h3>${esc(t.title)}</h3>${t.desc?'<p>'+esc(t.desc)+'</p>':''}<div class="rew">${rew(t)}</div><button class="big" data-act="submit" data-id="${t.id}">Я сделал(а)!</button></div>`)}
+  if(wa.length){h+='<h2>Ждут проверки</h2>';wa.forEach(t=>h+=`<div class="card"><h3>${esc(t.title)}</h3><div class="rew">${rew(t)} · родитель проверит</div></div>`)}
+  if(co.length){h+='<h2>Выполнено</h2>';co.slice(-10).reverse().forEach(t=>h+=`<div class="card"><h3>✔ ${esc(t.title)}</h3><div class="rew">${rew(t)}</div></div>`)}
+  return h;
+}
+
+function viewShop(){
+  let h='<h2>Мои желания</h2>';
+  if(!S.wishes.length)h+='<div class="empty">Желаний пока нет.<br>Родитель добавляет их во вкладке «Родитель».</div>';
+  S.wishes.forEach(w=>{const can=S.coins>=w.price;
+    h+=`<div class="card"><h3>${esc(w.title)}</h3><div class="rew">🪙 ${w.price}</div><button class="big ${can?'':'sec'}" ${can?'':'disabled'} data-act="buy" data-id="${w.id}">${can?'Получить за монеты':'Не хватает '+(w.price-S.coins)+' 🪙'}</button></div>`});
+  if(S.spent.length){h+='<h2>Получено</h2>';S.spent.slice(-10).reverse().forEach(s=>h+=`<div class="card"><h3>🎉 ${esc(s.title)}</h3><div class="rew">🪙 ${s.price}</div></div>`)}
+  return h;
+}
+
+function viewParent(){
+  if(!parentUnlocked){
+    return `<div class="card"><h3>Кабинет родителя</h3><p>${S.pin?'Введите PIN, чтобы продолжить.':'Придумайте PIN из 4–6 цифр. Он защитит проверку заданий.'}</p>
+    <input id="pin" class="pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off">
+    <button class="big" data-act="${S.pin?'unlock':'newpin'}">${S.pin?'Войти':'Установить PIN'}</button></div>`;
+  }
+  const wa=S.tasks.filter(t=>t.status==='WAITING_APPROVAL'),av=S.tasks.filter(t=>t.status==='AVAILABLE');
+  let h='<h2>На проверке</h2>';
+  if(!wa.length)h+='<div class="empty">Нечего проверять</div>';
+  wa.forEach(t=>h+=`<div class="card"><h3>${esc(t.title)}</h3><div class="rew">${rew(t)}</div><div class="row"><button data-act="approve" data-id="${t.id}">Подтвердить</button><button class="warn" data-act="reject" data-id="${t.id}">Вернуть</button></div></div>`);
+  h+='<h2>Задания</h2><div class="row" style="margin-bottom:12px"><button data-act="addtask">+ Своё</button><button class="sec" data-act="catalog">Из каталога</button></div>';
+  av.forEach(t=>h+=`<div class="card"><h3>${esc(t.title)}</h3><div class="rew">${rew(t)}</div><button class="warn" data-act="del" data-id="${t.id}">Удалить</button></div>`);
+  h+='<h2>Желания ребёнка</h2><button class="sec" data-act="addwish">+ Желание</button>';
+  S.wishes.forEach(w=>h+=`<div class="card" style="margin-top:10px"><h3>${esc(w.title)}</h3><div class="rew">🪙 ${w.price}</div><button class="warn" data-act="delwish" data-id="${w.id}">Удалить</button></div>`);
+  h+='<h2>Прочее</h2><div class="row"><button class="sec" data-act="lock">Выйти из кабинета</button><button class="warn" data-act="reset">Сбросить всё</button></div>';
+  return h;
+}
+
+function taskForm(pre){
+  const m=modal(`<h3>Новое задание</h3><label>Название</label><input id="f-t" value="${esc(pre.t||'')}">
+   <label>Описание / шаги</label><textarea id="f-d" rows="3">${esc(pre.d||'')}</textarea>
+   <div class="grid"><div><label>Монеты</label><input id="f-c" type="number" inputmode="numeric" value="${pre.c??10}"></div>
+   <div><label>XP</label><input id="f-x" type="number" inputmode="numeric" value="${pre.x??10}"></div></div>
+   <button class="big" id="f-ok">Добавить</button>`);
+  m.querySelector('#f-ok').onclick=()=>{
+    const t=m.querySelector('#f-t').value.trim();if(!t)return toast('Нужно название');
+    const n=(id,max)=>Math.min(max,Math.max(0,parseInt(m.querySelector(id).value)||0));
+    S.tasks.push({id:uid(),title:t,desc:m.querySelector('#f-d').value.trim(),coins:n('#f-c',10000),xp:n('#f-x',10000),status:'AVAILABLE'});
+    save();m.remove();render();
+  };
+}
+
+document.addEventListener('click',async e=>{
+  const tb=e.target.closest('[data-tab]');
+  if(tb){tab=tb.dataset.tab;if(tab!=='parent')parentUnlocked=false;return render()}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const id=b.dataset.id,act=b.dataset.act;
+  const pinVal=()=>(document.getElementById('pin')||{}).value||'';
+  if(act==='submit'){submit(id);toast('Отправлено родителю')}
+  else if(act==='buy'){const w=S.wishes.find(x=>x.id===id);if(w&&S.coins>=w.price){S.coins-=w.price;S.spent.push({title:w.title,price:w.price});S.wishes=S.wishes.filter(x=>x.id!==id);save();toast('Ура! 🎉')}}
+  else if(act==='newpin'){const p=pinVal();if(!/^\d{4,6}$/.test(p))return toast('PIN: 4–6 цифр');await setPin(p);parentUnlocked=true}
+  else if(act==='unlock'){if(await checkPin(pinVal()))parentUnlocked=true;else return toast('Неверный PIN')}
+  else if(act==='approve'){approve(id);toast('Награда выдана')}
+  else if(act==='reject'){reject(id)}
+  else if(act==='del'){del(id)}
+  else if(act==='delwish'){S.wishes=S.wishes.filter(x=>x.id!==id);save()}
+  else if(act==='lock'){parentUnlocked=false}
+  else if(act==='addtask'){return taskForm({})}
+  else if(act==='catalog'){
+    const m=modal('<h3>Каталог заданий</h3>'+CATALOG.map((c,i)=>`<div class="card"><h3>${esc(c.t)}</h3><div class="rew">🪙 ${c.c}</div><button class="sec" data-pick="${i}">Выбрать</button></div>`).join(''));
+    m.addEventListener('click',ev=>{const p=ev.target.closest('[data-pick]');if(p){const c=CATALOG[+p.dataset.pick];m.remove();taskForm({t:c.t,d:c.d,c:c.c,x:10})}});return;
+  }
+  else if(act==='addwish'){
+    const m=modal(`<h3>Новое желание</h3><label>Что хочется</label><input id="w-t"><label>Цена в монетах</label><input id="w-p" type="number" inputmode="numeric" value="50"><button class="big" id="w-ok">Добавить</button>`);
+    m.querySelector('#w-ok').onclick=()=>{const t=m.querySelector('#w-t').value.trim(),p=parseInt(m.querySelector('#w-p').value)||0;if(!t||p<=0)return toast('Заполните поля');S.wishes.push({id:uid(),title:t,price:p});save();m.remove();render()};return;
+  }
+  else if(act==='reset'){if(confirm('Удалить все задания, монеты и PIN на этом устройстве?')){S={tasks:[],xp:0,coins:0,wishes:[],pin:null,spent:[]};save();parentUnlocked=false}else return}
+  render();
+});
+render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
