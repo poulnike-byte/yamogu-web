@@ -458,4 +458,8 @@ document.addEventListener('input',e=>{const t=e.target;
   else if(t.dataset&&t.dataset.price!==undefined){intro().draft[Number(t.dataset.price)].price=parseInt(t.value)||0;save()}});
 // Старт — только когда загружены все скрипты (иначе render() мог вызваться раньше, чем появились onboarding.js, cosmetics.js и др.)
 window.addEventListener('load',()=>Store.init().then(()=>{S=load();render()}));
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator){
+  const hadSW=!!navigator.serviceWorker.controller;let reloaded=false;   // новая версия взяла управление → один раз перезагрузить, чтобы сразу увидеть обновление
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadSW&&!reloaded){reloaded=true;location.reload()}});
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});
+}
