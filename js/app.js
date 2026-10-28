@@ -22,7 +22,7 @@ const CATALOG=[
 // goals: [{id,title,target(1..7),status:ACTIVE|ARCHIVED,created:'YYYY-MM-DD'}]; log: [{day:'YYYY-MM-DD',title}] — подтверждённые задания (прогресс целей считается из него, как GoalsReader в Android)
 // templates: [{id,title,desc,coins,xp,rec:'daily'|'weekdays',active}] — шаблоны повторяющихся заданий; на каждый день создаётся задание с id «шаблон:дата» (повтор не дублируется)
 // task.date: 'YYYY-MM-DD' (задание на этот день); у старых заданий даты нет — они считаются «на сегодня» всегда
-const blank=()=>({tasks:[],xp:0,coins:0,wishes:[],purchases:[],goals:[],log:[],templates:[],skills:[],rets:[]});
+const blank=()=>({tasks:[],xp:0,coins:0,wishes:[],purchases:[],goals:[],log:[],templates:[],skills:[],rets:[],deco:{bought:[],worn:{}}});
 // skills: [{id,title,stage:LEARNING|PRACTICING|INDEPENDENT|HABIT,since,status}]; task/template/goal.skill — id навыка (или нет); log: {day,title,skill,help} (help — как справился: INDEPENDENT|AFTER_REMINDER|SMALL_HELP|TOGETHER|UNKNOWN)
 const GOAL_TEMPLATES=[
  {key:'MORNING_ALONE',title:'Собираться утром без лишних напоминаний',target:5},
@@ -56,7 +56,7 @@ function goalProgress(k,g){
 const freshIntro=()=>({step:0,done:false,family:{},wish:{},wk:null,draft:null});
 function normalize(s){
   s.intro=s.intro||freshIntro();
-  for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];k.templates=k.templates||[];k.skills=k.skills||[];k.rets=k.rets||[];
+  for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];k.templates=k.templates||[];k.skills=k.skills||[];k.rets=k.rets||[];k.deco=k.deco||{bought:[],worn:{}};
     (k.spent||[]).forEach(p=>k.purchases.push({id:uid(),wishId:'',title:p.title,price:p.price,status:'DELIVERED'}));delete k.spent}
   s.onb=s.onb||freshOnb(s);   // первый запуск: онбординг ребёнка, если данных на устройстве ещё нет
   return s;
@@ -70,7 +70,7 @@ function load(){
 }
 let S=null;   // заполняется после Store.init() в конце файла
 // Свободный баланс = заработано − цена каждой не отменённой покупки (как WishStore.available)
-const held=k=>k.purchases.filter(p=>p.status!=='CANCELLED').reduce((a,p)=>a+p.price,0);
+const held=k=>k.purchases.filter(p=>p.status!=='CANCELLED').reduce((a,p)=>a+p.price,0)+decoSpent(k);   // + монеты, потраченные на украшения карты
 const avail=k=>Math.max(0,k.coins-held(k));
 const openPurchase=(k,wishId)=>k.purchases.find(p=>p.wishId===wishId&&(p.status==='BOUGHT'||p.status==='POSTPONED'));
 const save=()=>{S._t=Date.now();Store.write(S)};
@@ -82,7 +82,8 @@ const K=()=>S.kids[S.cur], kinfo=()=>KIDS.find(k=>k.id===S.cur);
 function submit(id){const t=K().tasks.find(x=>x.id===id&&x.status==='AVAILABLE');if(t){t.status='WAITING_APPROVAL';t.sub=dayStr();save()}}
 function reject(id){const k=K(),t=k.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(t){t.status='AVAILABLE';k.rets.push({day:dayStr(),title:t.title});save()}}   // rets — журнал возвратов на доработку (для отчёта)
 function approve(id,help){const k=K(),t=k.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(!t)return; // награда ровно один раз
-  t.status='COMPLETED';k.xp+=t.xp;k.coins+=t.coins;k.log.push({day:dayStr(),title:t.title,skill:t.skill||null,help:help||'UNKNOWN'});save()}
+  t.status='COMPLETED';k.xp+=t.xp;k.coins+=t.coins;k.log.push({day:dayStr(),title:t.title,skill:t.skill||null,help:help||'UNKNOWN'});
+  const td=todays(k);if(td.length&&td.every(x=>x.status==='COMPLETED'))k.summit=true;/* дошёл до вершины: все задания дня подтверждены */save()}
 function del(id){const k=K(),i=k.tasks.findIndex(x=>x.id===id&&x.status==='AVAILABLE');if(i>=0){k.tasks.splice(i,1);save()}}
 
 // ---- PIN (соль + SHA-256) ----
@@ -393,7 +394,7 @@ function taskForm(pre){
 
 document.addEventListener('click',async e=>{
   const tb=e.target.closest('[data-tab]');
-  if(tb){tab=tb.dataset.tab;tabChanged=true;routeFocus=true;if(tab!=='parent'){unlocked=false;introOpen=false}parentPage='hub';return render()}
+  if(tb){tab=tb.dataset.tab;tabChanged=true;routeFocus=true;if(tab!=='parent'){unlocked=false;introOpen=false}parentPage='hub';wishPage='main';return render()}
   const b=e.target.closest('[data-act]');if(!b)return;
   const id=b.dataset.id,act=b.dataset.act,pinVal=()=>(document.getElementById('pin')||{}).value||'';
   if(act==='hidehint'){S.hintHome=1;save()}
@@ -429,6 +430,11 @@ document.addEventListener('click',async e=>{
   else if(act==='editkid'){return kidForm()}
   else if(act==='chpin'){return pinForm()}
   else if(act==='help'){return helpDialog()}
+  else if(act==='wp'){wishPage=id;tabChanged=true}
+  else if(act==='decobuy'){return confirmDeco(id)}
+  else if(act==='decoequip'){if(equipDeco(K(),id))toast('Надето')}
+  else if(act==='shopsw'){S.shopOff=!S.shopOff;save()}
+  else if(act==='decorefund'){if(refundDeco(K(),id))toast('Монеты возвращены')}
   else if(act==='lock'){unlocked=false;introOpen=false;parentPage='hub'}
   else if(act==='addtask'){return taskForm({})}
   else if(act==='catalog'){
@@ -450,5 +456,6 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset&&t.dataset.free){const A=ansOf(t.dataset.free);A[t.dataset.free+TXT]=[t.value];A[t.dataset.free]=A[t.dataset.free]&&A[t.dataset.free][0]===NONE?[]:A[t.dataset.free]||[];save();
     const nb=document.querySelector('[data-act="i_next"]');if(nb)nb.disabled=!answered(qOf(t.dataset.free),A)}
   else if(t.dataset&&t.dataset.price!==undefined){intro().draft[Number(t.dataset.price)].price=parseInt(t.value)||0;save()}});
-Store.init().then(()=>{S=load();render()});
+// Старт — только когда загружены все скрипты (иначе render() мог вызваться раньше, чем появились onboarding.js, cosmetics.js и др.)
+window.addEventListener('load',()=>Store.init().then(()=>{S=load();render()}));
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});

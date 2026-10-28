@@ -253,3 +253,43 @@ test('Кабинет родителя: плитки, переходы, проф�
   await p.fill('#pin', '1357'); await p.click('[data-act=unlock]'); await exitIntro(p);
   assert.ok(await p.isVisible('text=Моя семья'));
 }));
+
+test('Украшения карты: покупка, «Надеть», достижения, выключатель, возврат за сутки, баланс общий с желаниями', async () => session(async s => {
+  let p = s.page; await asKirill(p);
+  // по умолчанию надеты бесплатные
+  assert.deepEqual(await p.evaluate(() => ['FLAG', 'TRAIL', 'TREES', 'RING'].map(sl => decoWorn(K(), sl).id)), ['flag_red', 'trail_sand', 'trees_round', 'ring_white']);
+  // достижения: 1 монета — флаг со звездой; 200 монет — лесная тропа; вершина — золотая рамка
+  assert.deepEqual(await p.evaluate(() => [decoOwns(K(), decoById('flag_star')), decoOwns(K(), decoById('trail_green')), decoOwns(K(), decoById('ring_gold'))]), [false, false, false]);
+  await p.evaluate(() => { K().coins = 150; K().tasks.push({ id: 'z1', date: dayStr(), title: 'Т', desc: '', coins: 0, xp: 0, status: 'AVAILABLE' }); });
+  assert.deepEqual(await p.evaluate(() => [decoOwns(K(), decoById('flag_star')), decoOwns(K(), decoById('trail_green'))]), [true, false]);
+  await p.evaluate(() => { submit('z1'); approve('z1', 'INDEPENDENT'); });
+  assert.equal(await p.evaluate(() => decoOwns(K(), decoById('ring_gold'))), true, 'все задания дня подтверждены = вершина достигнута');
+  // покупка через экран: «Хочу» → подтверждение → куплено и надето, баланс уменьшился
+  await p.click('[data-tab=wishes]'); await p.click('[data-act=wp][data-id=decor]');
+  assert.ok(await p.isVisible('text=У тебя свободно: 150 монет'));
+  await p.click('[data-act=decobuy][data-id=flag_blue]'); assert.ok(await p.isVisible('text=Купить «Синий флаг»?'));
+  await p.click('#dy-no'); assert.equal(await p.evaluate(() => K().deco.bought.length), 0);
+  await p.click('[data-act=decobuy][data-id=flag_blue]'); await p.click('#dy-ok');
+  assert.deepEqual(await p.evaluate(() => [K().deco.bought.length, avail(K()), decoWorn(K(), 'FLAG').id]), [1, 50, 'flag_blue']);
+  assert.ok(await p.isVisible('text=У тебя свободно: 50 монет'));
+  // монеты общие с желаниями: на желание за 100 уже не хватает
+  assert.equal(await p.evaluate(() => { K().wishes.push({ id: 'ww', title: 'W', price: 100, hidden: false }); return buyWish(K(), 'ww'); }), 'NOT_ENOUGH');
+  // повторная покупка и нехватка монет
+  assert.equal(await p.evaluate(() => buyDeco(K(), 'flag_blue')), 'ALREADY_OWNED');
+  assert.equal(await p.evaluate(() => buyDeco(K(), 'trail_stone')), 'NOT_ENOUGH');
+  assert.equal(await p.evaluate(() => buyDeco(K(), 'flag_star')), 'NOT_FOR_SALE');
+  // карта показывает надетое
+  await p.click('[data-tab=route]');
+  assert.ok(await p.locator('img[src="img/decor/flag_blue.png"], image[href="img/decor/flag_blue.png"]').count() >= 1, 'на карте синий флаг');
+  // родитель выключает покупки
+  await p.evaluate(() => { S.shopOff = true; K().coins = 1000; });
+  assert.equal(await p.evaluate(() => buyDeco(K(), 'trail_stone')), 'SHOP_OFF');
+  assert.equal(await p.evaluate(() => equipDeco(K(), 'flag_red')), true, 'надевать уже имеющееся можно и при выключенных покупках');
+  // возврат: в течение суток — монеты возвращаются и надетое снимается; позже суток — нельзя
+  await p.evaluate(() => { S.shopOff = false; buyDeco(K(), 'trail_stone'); equipDeco(K(), 'trail_stone'); });
+  const before = await p.evaluate(() => avail(K()));
+  assert.equal(await p.evaluate(() => refundDeco(K(), 'trail_stone')), true);
+  assert.deepEqual(await p.evaluate(b => [avail(K()) - b, decoWorn(K(), "TRAIL").id], before), [100, "trail_sand"]);
+  await p.evaluate(() => { K().deco.bought.find(b => b.id === 'flag_blue').at = Date.now() - 25 * 3600 * 1000; });
+  assert.equal(await p.evaluate(() => refundDeco(K(), 'flag_blue')), false, 'позже суток возврата нет');
+}));

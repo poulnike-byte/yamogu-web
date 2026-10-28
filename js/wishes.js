@@ -31,6 +31,7 @@ function setGoal(k,id){const w=k.wishes.find(x=>x.id===id&&!x.hidden);if(!w)retu
 
 // ---- ребёнок ----
 function viewRewards(){
+  if(wishPage==='decor')return viewDecor();
   const k=K(),av=avail(k),fz=frozen(k),shown=k.wishes.filter(w=>!w.hidden);
   let h=topbar('Мои награды,')+`<div class="hero" style="min-height:0"><div class="big">${I.coin} ${av}</div><div class="small" style="text-align:center">мой баланс · ${I.star} ${k.xp} XP</div></div>
    <p class="small" style="margin:10px 4px 0">Копи монеты на то, что хочешь. Награду выдаёт родитель.</p>${fz?`<p class="small" style="margin:4px 4px 0">Ещё ${coinsT(fz)} ждут, пока родитель выдаст награду.</p>`:''}<div class="sec"><h2>Мои желания</h2></div>`;
@@ -43,7 +44,7 @@ function viewRewards(){
     <button class="btn sm ${isGoal?'':'soft'}" data-act="wishgoal" data-id="${w.id}" aria-label="${isGoal?'Это моя цель. Нажми, чтобы убрать':'Сделать «'+esc(w.title)+'» моей целью'}" style="flex-basis:100%">${isGoal?'★ Это моя цель':'Сделать целью'}</button></div>`});
   const dl=k.purchases.filter(p=>p.status==='DELIVERED');
   if(dl.length){h+=`<div class="sec"><h2>Уже получено</h2><span class="cnt">${dl.length}</span></div>`;dl.slice(-8).reverse().forEach(p=>h+=`<div class="task c0"><div class="tx"><h3>${ico('gift-outline')} ${esc(p.title)}</h3><div class="meta"><span>${I.coin} ${p.price}</span></div></div></div>`)}
-  return h;
+  return h+decoEntry(k);
 }
 // Подтверждение покупки: ребёнок видит цену и сколько останется
 function confirmBuy(id){

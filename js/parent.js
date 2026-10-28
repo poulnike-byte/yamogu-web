@@ -64,7 +64,7 @@ function pageSettings(k){
   <div class="task c1" data-act="chpin" role="button" tabindex="0" style="cursor:pointer"><div class="tx"><h3>Родительский PIN</h3><div class="small">сменить PIN входа в кабинет</div></div><span style="font-size:26px;font-weight:800;color:var(--blue)" aria-hidden="true">›</span></div>
   <div class="task c2" data-act="sound" role="button" tabindex="0" style="cursor:pointer"><div class="tx"><h3>Звук наград</h3><div class="small">${S.sound===false?'выключен':'включён'}: нажмите, чтобы ${S.sound===false?'включить':'выключить'}</div></div></div>
   <div class="task c3" data-act="help" role="button" tabindex="0" style="cursor:pointer"><div class="tx"><h3>Помощь</h3><div class="small">как устроены задания, награды и PIN</div></div><span style="font-size:26px;font-weight:800;color:var(--blue)" aria-hidden="true">›</span></div>
-  <div class="sec"><h2>Данные семьи</h2></div><p class="small" style="margin:0 4px 8px">Данные хранятся только на этом устройстве. Удаление нельзя отменить.</p><button class="btn sm red" data-act="reset">Удалить данные семьи</button>`;
+  ${parentDecoBlock(k)}<div class="sec"><h2>Данные семьи</h2></div><p class="small" style="margin:0 4px 8px">Данные хранятся только на этом устройстве. Удаление нельзя отменить.</p><button class="btn sm red" data-act="reset">Удалить данные семьи</button>`;
 }
 // ---- окна ----
 function kidForm(){
