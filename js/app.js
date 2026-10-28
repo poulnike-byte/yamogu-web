@@ -28,18 +28,18 @@ function normalize(s){
   return s;
 }
 function load(){
-  try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.kids)return normalize(s)}catch(e){}
+  try{const s=Store.read();if(s&&s.kids)return normalize(s)}catch(e){}
   const s={kids:{kirill:blank(),vika:blank()},cur:null,pin:null};
   try{const o=JSON.parse(localStorage.getItem('yamogu_v1')); // перенос данных первой версии
     if(o&&o.tasks){Object.assign(s.kids.kirill,{tasks:o.tasks,xp:o.xp,coins:o.coins,wishes:o.wishes||[],spent:o.spent||[]});s.pin=o.pin||null}}catch(e){}
   return normalize(s);
 }
-let S=load();
+let S=null;   // заполняется после Store.init() в конце файла
 // Свободный баланс = заработано − цена каждой не отменённой покупки (как WishStore.available)
 const held=k=>k.purchases.filter(p=>p.status!=='CANCELLED').reduce((a,p)=>a+p.price,0);
 const avail=k=>Math.max(0,k.coins-held(k));
 const openPurchase=(k,wishId)=>k.purchases.find(p=>p.wishId===wishId&&(p.status==='BOUGHT'||p.status==='POSTPONED'));
-const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+const save=()=>{S._t=Date.now();Store.write(S)};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const K=()=>S.kids[S.cur], kinfo=()=>KIDS.find(k=>k.id===S.cur);
@@ -231,10 +231,12 @@ function modal(html){const m=document.createElement('div');m.className='modal';m
   m.addEventListener('click',e=>{if(e.target===m)m.remove()});document.body.appendChild(m);return m}
 const rew=t=>`<span>⭐ ${t.xp} XP</span><span>🪙 ${t.coins}</span>`;
 
+const needHomeHint=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!S.hintHome;
+const homeHint=()=>needHomeHint()?'<div class="card"><b>Чтобы данные не пропали</b><p class="muted" style="margin:4px 0 10px">Нажмите «Поделиться» → «На экран Домой» и открывайте ЯмогУ! со значка.</p><button class="btn sm soft" data-act="hidehint">Понятно</button></div>':'';
 function render(){
   if(!S.cur){
     $app.innerHTML=`<main class="welcome"><img class="logo" src="img/ref_logo.png" alt="ЯмогУ!"><p>Я учусь. Я пробую. Я могу!</p>
-    <h2>Кто сегодня играет?</h2><div class="pick">${KIDS.map(k=>`<button class="${k.cls}" data-act="who" data-id="${k.id}"><img src="${k.img}" alt="">${k.name}</button>`).join('')}</div></main>`;
+    <h2>Кто сегодня играет?</h2>${homeHint()}<div class="pick">${KIDS.map(k=>`<button class="${k.cls}" data-act="who" data-id="${k.id}"><img src="${k.img}" alt="">${k.name}</button>`).join('')}</div></main>`;
     return;
   }
   const waiting=K().tasks.filter(t=>t.status==='WAITING_APPROVAL').length;
@@ -331,7 +333,8 @@ document.addEventListener('click',async e=>{
   if(tb){tab=tb.dataset.tab;if(tab!=='parent'){unlocked=false;introOpen=false}return render()}
   const b=e.target.closest('[data-act]');if(!b)return;
   const id=b.dataset.id,act=b.dataset.act,pinVal=()=>(document.getElementById('pin')||{}).value||'';
-  if(act==='who'){S.cur=id;save();if(!b.dataset.stay){tab='tasks';unlocked=false}}
+  if(act==='hidehint'){S.hintHome=1;save()}
+  else if(act==='who'){S.cur=id;save();if(!b.dataset.stay){tab='tasks';unlocked=false}}
   else if(act==='switch'){S.cur=null;unlocked=false;save()}
   else if(act==='submit'){submit(id);toast('Отправлено родителю 👍')}
   else if(act==='buy'){const k=K(),w=k.wishes.find(x=>x.id===id);if(w&&!openPurchase(k,w.id)&&avail(k)>=w.price){k.purchases.push({id:uid(),wishId:w.id,title:w.title,price:w.price,status:'BOUGHT'});save();toast('Попросили родителя 🎁')}}
@@ -361,5 +364,5 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset&&t.dataset.free){const A=ansOf(t.dataset.free);A[t.dataset.free+TXT]=[t.value];A[t.dataset.free]=A[t.dataset.free]&&A[t.dataset.free][0]===NONE?[]:A[t.dataset.free]||[];save();
     const nb=document.querySelector('[data-act="i_next"]');if(nb)nb.disabled=!answered(qOf(t.dataset.free),A)}
   else if(t.dataset&&t.dataset.price!==undefined){intro().draft[Number(t.dataset.price)].price=parseInt(t.value)||0;save()}});
-render();
+Store.init().then(()=>{S=load();render()});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
