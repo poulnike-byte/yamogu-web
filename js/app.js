@@ -303,7 +303,7 @@ function viewParent(){
   if(!unlocked){
     return `<div class="top"><div class="hello"><b>Кабинет родителя</b></div></div><div class="card"><p style="margin-top:0">${S.pin?'Введите PIN, чтобы продолжить.':'Придумайте PIN из 4–6 цифр. Он защитит проверку заданий и кабинет родителя.'}</p>
     <input id="pin" class="pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off">
-    <button class="btn full" data-act="${S.pin?'unlock':'newpin'}">${S.pin?'Войти':'Установить PIN'}</button></div>`;
+    <button class="btn full" data-act="${S.pin?'unlock':'newpin'}">${S.pin?'Войти':'Установить PIN'}</button>${S.pin?'<button class="btn sm soft" data-act="forgot" style="margin-top:12px">Забыли PIN?</button>':''}</div>`;
   }
   if(introOpen)return introView();
   const k=K(),wa=k.tasks.filter(t=>t.status==='WAITING_APPROVAL'),av=k.tasks.filter(t=>t.status==='AVAILABLE');
@@ -369,6 +369,13 @@ document.addEventListener('click',async e=>{
   else if(act==='addwish'){
     const m=modal(`<h3>Новое желание</h3><label>Что хочется</label><input id="w-t"><label>Цена в монетах</label><input id="w-p" type="number" inputmode="numeric" value="50"><button class="btn full" id="w-ok">Добавить</button>`);
     m.querySelector('#w-ok').onclick=()=>{const t=m.querySelector('#w-t').value.trim(),p=parseInt(m.querySelector('#w-p').value)||0;if(!t||p<=0)return toast('Заполните поля');K().wishes.push({id:uid(),title:t,price:p});save();m.remove();render()};return;
+  }
+  else if(act==='forgot'){
+    const m=modal('<h3>Забыли PIN?</h3><p class="ip">PIN нельзя восстановить. Чтобы задать новый, придётся <b>удалить все данные на этом устройстве</b>: задания, монеты, желания, ответы знакомства и сам PIN. Это нельзя отменить.</p><label>Для подтверждения напишите слово УДАЛИТЬ</label><input id="fg-w" autocomplete="off" autocapitalize="characters"><button class="btn full red" id="fg-ok">Удалить всё и задать новый PIN</button><button class="btn full soft" id="fg-no" style="margin-top:8px">Отмена</button>');
+    m.querySelector('#fg-no').onclick=()=>m.remove();
+    m.querySelector('#fg-ok').onclick=()=>{ if(m.querySelector('#fg-w').value.trim().toUpperCase()!=='УДАЛИТЬ')return toast('Напишите слово УДАЛИТЬ');
+      const keep=S.hintHome,cur=S.cur; S=normalize({kids:{kirill:blank(),vika:blank()},cur:cur,pin:null}); if(keep)S.hintHome=keep; save(); Store.flush(); unlocked=false; introOpen=false; m.remove(); toast('Данные удалены. Задайте новый PIN'); tab='parent'; render(); };
+    return;
   }
   else if(act==='reset'){if(confirm('Удалить все задания, монеты и PIN на этом устройстве?')){S=normalize({kids:{kirill:blank(),vika:blank()},cur:null,pin:null});save();unlocked=false;introOpen=false}else return}
   render();
