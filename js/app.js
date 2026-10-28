@@ -248,7 +248,7 @@ function introAct(act,b){
   else if(act==='i_next'){
     if(I.step===TABLE){const kept=I.draft.filter(r=>r.on);
       if(kept.some(r=>!(r.price>=10&&r.price<=100000)))return toast('Цена от 10 до 100 000 монет');
-      const k=S.kids[I.wk];k.wishes=kept.map(r=>({id:uid(),title:r.title,price:Math.round(r.price)}));I.step=FIN}
+      const k=S.kids[I.wk];k.wishes=kept.map(r=>({id:uid(),title:r.title,price:Math.round(r.price),hidden:false}));I.step=FIN}
     else if(I.step===FIN){I.done=true;introOpen=false}
     else{I.step++;if(I.step===TABLE){I.draft=buildTable(ansOf('w1'))}
       if(I.step===FAM_RES)I.wish=I.wish||{}}
@@ -296,7 +296,7 @@ function viewTasks(){
   let h=topbar('Привет,')+`<div class="hero"><img class="hk" src="${ki.img}" alt="">
    <div class="info"><h2>Уровень ${lvl}</h2><div class="bar"><i style="width:${inLvl/2}%"></i></div><div class="small">${inLvl} / 200 XP</div>
    <div class="stats"><div class="st"><img src="img/ref_stat_star.png" alt="">${k.xp}<span>XP</span></div><div class="st"><img src="img/skill_money.png" alt="">${avail(k)}<span>монет</span></div></div></div></div>
-   <div class="sec"><h2>Мои задания</h2><span class="cnt">${done}/${tt.length}</span></div>`;
+   ${goalCardHome(k)}<div class="sec"><h2>Мои задания</h2><span class="cnt">${done}/${tt.length}</span></div>`;
   if(!tt.length)h+='<div class="empty">На сегодня заданий нет.<br>Попроси родителя добавить их: кнопка «Родителям» внизу.</div>';
   av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3>${t.desc?`<div class="desc">${esc(t.desc)}</div>`:''}<div class="meta">${rew(t)}</div></div><button class="go" data-act="submit" data-id="${t.id}" aria-label="Готово">›</button></div>`);
   wa.forEach(t=>h+=`<div class="task c2"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${ico('hourglass-outline')} Ждёт проверки родителя</div></div></div>`);
@@ -332,19 +332,6 @@ function goalForm(pre){
     if(act.some(g=>g.title.toLowerCase()===title.toLowerCase()))return toast('Такая цель уже есть');
     const sk=resolveSkill(m,k,'g-s');if(sk.err)return toast(sk.err);
     k.goals.push({id:uid(),title,target:n,skill:sk.id,status:'ACTIVE',created:dayStr()});save();m.remove();render()};
-}
-
-function viewRewards(){
-  const k=K(),av=avail(k),fz=k.purchases.filter(p=>p.status==='BOUGHT'||p.status==='POSTPONED').reduce((x,p)=>x+p.price,0);
-  let h=topbar('Мои награды,')+`<div class="hero" style="min-height:0"><div class="big">${I.coin} ${av}</div><div class="small" style="text-align:center">мой баланс${fz?' · ждёт выдачи: '+fz:''} · ${I.star} ${k.xp} XP</div></div><div class="sec"><h2>Мои желания</h2></div>`;
-  if(!k.wishes.length)h+='<div class="empty">Желаний пока нет.<br>Родитель создаст их: «Главная» → «Родителям» → «Знакомство».</div>';
-  k.wishes.forEach((w,i)=>{const op=openPurchase(k,w.id),can=!op&&av>=w.price;
-    h+=`<div class="task c${(i+3)%5}"><div class="tx"><h3>${esc(w.title)}</h3><div class="meta"><span>${I.coin} ${w.price}</span><span>~${days(w.price)} дн.</span></div>
-    <div class="bar"><i style="width:${Math.min(100,100*av/w.price)}%"></i></div></div>
-    ${op?'<div class="small" style="font-weight:800">'+ico('hourglass-outline')+' Ждёт выдачи</div>':`<button class="btn sm ${can?'green':'soft'}" ${can?'':'disabled'} data-act="buy" data-id="${w.id}">${can?'Хочу!':'ещё '+(w.price-av)}</button>`}</div>`});
-  const dl=k.purchases.filter(p=>p.status==='DELIVERED');
-  if(dl.length){h+='<div class="sec"><h2>Уже получено</h2></div>';dl.slice(-8).reverse().forEach(p=>h+=`<div class="task c0"><div class="tx"><h3>${ico('gift-outline')} ${esc(p.title)}</h3><div class="meta">${I.coin} ${p.price}</div></div></div>`)}
-  return h;
 }
 
 const plural=(n,a,b,c)=>{const m=n%100,d=n%10;return m>10&&m<15?c:d===1?a:d>1&&d<5?b:c};
@@ -397,9 +384,7 @@ function viewParent(){
   if(!wa.length)h+='<div class="empty">Нечего проверять</div>';
   wa.forEach(t=>h+=`<div class="task c1"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div>
     <button class="go" style="background:#22C274;color:#fff" data-act="review" data-id="${t.id}" aria-label="Проверить">✓</button><button class="go" style="background:#F0486B;color:#fff" data-act="reject" data-id="${t.id}">✕</button></div>`);
-  const pd=k.purchases.filter(p=>p.status==='BOUGHT'||p.status==='POSTPONED');
-  if(pd.length){h+=`<div class="sec"><h2>Подарки к выдаче</h2><span class="cnt">${pd.length}</span></div>`;
-    pd.forEach(p=>h+=`<div class="task c4"><div class="tx"><h3>${ico('gift-outline')} ${esc(p.title)}</h3><div class="meta">${I.coin} ${p.price}${p.status==='POSTPONED'?' · отложено':''}</div><div class="row" style="margin-top:8px"><button class="btn sm green" data-act="deliver" data-id="${p.id}">Выдано</button><button class="btn sm soft" data-act="postpone" data-id="${p.id}">Отложить</button><button class="btn sm red" data-act="cancelp" data-id="${p.id}">Отменить</button></div></div></div>`)}
+  h+=parentPendingBlock(k);
   h+=`<div class="sec"><h2>Все задания</h2></div><div class="row" style="margin-bottom:12px"><button class="btn sm" data-act="addtask">+ Своё</button><button class="btn sm soft" data-act="catalog">Из каталога</button></div>`;
   av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div><button class="go" data-act="del" data-id="${t.id}">${ico('trash-outline')}</button></div>`);
   const tps=k.templates.filter(x=>x.active);
@@ -409,8 +394,7 @@ function viewParent(){
   h+=parentSkillsBlock(k);
   h+='<div class="sec"><h2>Цели на неделю</h2></div><button class="btn sm soft" data-act="addgoal">+ Цель</button><div style="height:10px"></div>';
   k.goals.filter(g=>g.status==='ACTIVE').forEach(g=>{const p=goalProgress(k,g);h+=`<div class="task c1"><div class="tx"><h3>${esc(g.title)}</h3><div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span></div></div><button class="go" data-act="delgoal" data-id="${g.id}" aria-label="Убрать цель">${ico('trash-outline')}</button></div>`});
-  h+='<div class="sec"><h2>Желания ребёнка</h2></div><button class="btn sm soft" data-act="addwish">+ Желание</button><div style="height:10px"></div>';
-  k.wishes.forEach(w=>h+=`<div class="task c4"><div class="tx"><h3>${esc(w.title)}</h3><div class="meta">${I.coin} ${w.price}</div></div><button class="go" data-act="delwish" data-id="${w.id}">${ico('trash-outline')}</button></div>`);
+  h+=parentWishesBlock(k);
   h+='<div class="sec"><h2>Прочее</h2></div><div class="row"><button class="btn sm soft" data-act="sound">'+(S.sound===false?'Звук: выкл':'Звук: вкл')+'</button><button class="btn sm soft" data-act="lock">Выйти из кабинета</button><button class="btn sm red" data-act="reset">Сбросить всё</button></div>';
   return h;
 }
@@ -446,8 +430,13 @@ document.addEventListener('click',async e=>{
   else if(act==='rnode'){return routeTaskDialog(id)}
   else if(act==='switch'){S.cur=null;unlocked=false;save()}
   else if(act==='submit'){submit(id);toast('Отправлено родителю')}
-  else if(act==='buy'){const k=K(),w=k.wishes.find(x=>x.id===id);if(w&&!openPurchase(k,w.id)&&avail(k)>=w.price){k.purchases.push({id:uid(),wishId:w.id,title:w.title,price:w.price,status:'BOUGHT'});save();toast('Попросили родителя')}}
-  else if(act==='deliver'||act==='postpone'||act==='cancelp'){const p=K().purchases.find(x=>x.id===id);if(p&&(p.status==='BOUGHT'||p.status==='POSTPONED')){p.status=act==='deliver'?'DELIVERED':act==='postpone'?'POSTPONED':'CANCELLED';save();toast(act==='deliver'?'Выдано':act==='cancelp'?'Монеты возвращены':'Отложено')}}
+  else if(act==='wishbuy'){return confirmBuy(id)}
+  else if(act==='wishgoal'){setGoal(K(),id)}
+  else if(act==='deliver'){if(setPurchase(K(),id,'DELIVERED'))toast('Выдано')}
+  else if(act==='postpone'){return postponeForm(id)}
+  else if(act==='cancelp'){return cancelForm(id)}
+  else if(act==='editwish'){return wishForm(K().wishes.find(x=>x.id===id))}
+  else if(act==='hidewish'){const w=K().wishes.find(x=>x.id===id);if(w)setWishHidden(K(),id,!w.hidden)}
   else if(act==='i_open'){introOpen=true}
   else if(act.startsWith('i_')){introAct(act,b)}
   else if(act==='newpin'){const p=pinVal();if(!/^\d{4,6}$/.test(p))return toast('PIN: 4–6 цифр');await setPin(p);unlocked=true;introOpen=!S.intro.done}
@@ -461,7 +450,7 @@ document.addEventListener('click',async e=>{
     if(x){x.active=false;k.tasks=k.tasks.filter(t=>!(t.tpl===id&&t.status==='AVAILABLE'));save();toast('Повтор остановлен')}}
   else if(act==='addgoal'){return goalForm({})}
   else if(act==='delgoal'){const g=K().goals.find(x=>x.id===id);if(g){g.status='ARCHIVED';save();toast('Цель убрана')}}   // архив: история недель сохраняется
-  else if(act==='delwish'){K().wishes=K().wishes.filter(x=>x.id!==id);save()}
+  else if(act==='delwish'){const k=K();k.wishes=k.wishes.filter(x=>x.id!==id);if(k.goal===id)k.goal=null;save()}
   else if(act==='sound'){S.sound=S.sound===false;save()}   // родитель включает и выключает звук наград
   else if(act==='lock'){unlocked=false;introOpen=false}
   else if(act==='addtask'){return taskForm({})}
@@ -469,10 +458,7 @@ document.addEventListener('click',async e=>{
     const m=modal('<h3>Каталог заданий</h3>'+CATALOG.map((c,i)=>`<div class="task c${i%5}"><img class="ic" src="${iconFor(c.t)}" alt=""><div class="tx"><h3>${esc(c.t)}</h3><div class="meta">${I.coin} ${c.c}</div></div><button class="go" data-pick="${i}">+</button></div>`).join(''));
     m.addEventListener('click',ev=>{const p=ev.target.closest('[data-pick]');if(p){const c=CATALOG[+p.dataset.pick];m.remove();taskForm({t:c.t,d:c.d,c:c.c,x:10})}});return;
   }
-  else if(act==='addwish'){
-    const m=modal(`<h3>Новое желание</h3><label>Что хочется</label><input id="w-t"><label>Цена в монетах</label><input id="w-p" type="number" inputmode="numeric" value="50"><button class="btn full" id="w-ok">Добавить</button>`);
-    m.querySelector('#w-ok').onclick=()=>{const t=m.querySelector('#w-t').value.trim(),p=parseInt(m.querySelector('#w-p').value)||0;if(!t||p<=0)return toast('Заполните поля');K().wishes.push({id:uid(),title:t,price:p});save();m.remove();render()};return;
-  }
+  else if(act==='addwish'){return wishPicker()}
   else if(act==='forgot'){
     const m=modal('<h3>Забыли PIN?</h3><p class="ip">PIN нельзя восстановить. Чтобы задать новый, придётся <b>удалить все данные на этом устройстве</b>: задания, монеты, желания, ответы знакомства и сам PIN. Это нельзя отменить.</p><label>Для подтверждения напишите слово УДАЛИТЬ</label><input id="fg-w" autocomplete="off" autocapitalize="characters"><button class="btn full red" id="fg-ok">Удалить всё и задать новый PIN</button><button class="btn full soft" id="fg-no" style="margin-top:8px">Отмена</button>');
     m.querySelector('#fg-no').onclick=()=>m.remove();

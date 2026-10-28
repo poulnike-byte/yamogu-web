@@ -146,3 +146,45 @@ test('Отчёт родителя: неделя и 4 недели, возвра�
   assert.ok(await p.isVisible('text=Из 6 отправленных'), 'в 4 недели: 4 подтверждено + 1 ждёт + 1 возвращено');
   assert.ok(await p.isVisible('text=«Не оценено» значит'));
 }));
+
+test('Желания: покупка с подтверждением, цель, отложить, выдать, отменить, скрыть', async () => session(async s => {
+  let p = s.page; await asKirill(p); await toParent(p, '2468');
+  // родитель: проверка цены и название, потом желание из шаблона
+  await p.click('[data-act=addwish]'); await p.click('[data-pick="own"]');
+  await p.fill('#w-t', 'Кино'); await p.fill('#w-p', '5'); await p.click('#w-ok');
+  assert.equal(await p.evaluate(() => K().wishes.length), 0, 'цена меньше 10 отклоняется');
+  await p.fill('#w-p', '300'); await p.click('#w-ok');
+  await p.click('[data-act=addwish]'); await p.click('[data-pick="0"]'); await p.click('#w-ok');   // «Выбрать мультфильм на вечер», 150
+  assert.deepEqual(await p.evaluate(() => K().wishes.map(w => [w.title, w.price])), [['Кино', 300], ['Выбрать мультфильм на вечер', 150]]);
+  await p.evaluate(() => { K().coins = 500; });
+  // ребёнок: покупка через подтверждение
+  await p.click('[data-tab=wishes]');
+  await p.locator('[data-act=wishbuy]').first().click();
+  assert.ok(await p.isVisible('text=Купить «Кино»?'));
+  await p.click('#by-no'); assert.equal(await p.evaluate(() => K().purchases.length), 0, '«Не сейчас» ничего не покупает');
+  await p.locator('[data-act=wishbuy]').first().click(); await p.click('#by-ok');
+  assert.deepEqual(await p.evaluate(() => [K().purchases.length, avail(K()), K().purchases[0].status]), [1, 200, 'BOUGHT']);
+  assert.ok(await p.isVisible('text=Куплено. Ждём, когда родитель выдаст награду.'));
+  await p.evaluate(() => buyWish(K(), K().wishes[0].id));   // повторная покупка того же желания
+  assert.equal(await p.evaluate(() => K().purchases.length), 1, 'открытая покупка по желанию только одна');
+  // цель
+  await p.locator('[data-act=wishgoal]').nth(1).click();
+  await p.click('[data-tab=home]'); assert.ok(await p.isVisible('text=Моя цель: Выбрать мультфильм на вечер'));
+  // родитель: отложить с причиной, ребёнок видит причину, потом выдать
+  await p.click('[data-act=toparent]'); await p.fill('#pin', '2468'); await p.click('[data-act=unlock]'); await exitIntro(p);
+  await p.evaluate(() => { K().purchases[0].at = addDays(dayStr(), -8); render(); });
+  assert.ok(await p.isVisible('text=Ждёт выдачи уже 8 дней'));
+  await p.click('[data-act=postpone]'); await p.fill('#pp-n', 'пойдём в субботу'); await p.click('#pp-ok');
+  assert.equal(await p.evaluate(() => [K().purchases[0].status, K().purchases[0].note, avail(K())].join('|')), 'POSTPONED|пойдём в субботу|200', 'отложено, монеты всё ещё заморожены');
+  await p.click('[data-act=deliver]');
+  assert.equal(await p.evaluate(() => K().purchases[0].status), 'DELIVERED');
+  assert.equal(await p.evaluate(() => avail(K())), 200, 'выданное — потрачено');
+  // отмена возвращает монеты
+  await p.evaluate(() => { buyWish(K(), K().wishes[1].id); render(); });
+  assert.equal(await p.evaluate(() => avail(K())), 50);
+  await p.click('[data-act=cancelp]'); await p.click('#cp-ok');
+  assert.equal(await p.evaluate(() => avail(K())), 200, 'отмена возвращает монеты полностью');
+  // скрыть желание: ребёнок не видит, цель снимается
+  await p.click('[data-act=hidewish] >> nth=1');
+  assert.deepEqual(await p.evaluate(() => [K().wishes[1].hidden, K().goal]), [true, null]);
+}));
