@@ -18,6 +18,9 @@
   --teal:#2CC9B0;--blue-chart:#4E9CFF;--track:#E4EEFA;--track-future:#EEF3FA;--track-help:#EDF0F6;--kpi:#F2F5FB;--stage-off:#EEF2F8;--stage-off-ink:#6A7488;--stage-done:#D8F2E6;--dot-off:#B9D4F5;--route-dash:#9CC4FF;--hero-a:#DDF8E8;--hero-b:#E9F6FF;
   /* Уровни помощи (самостоятельно = зелёный) */
   --help-reminder:#6AA6E8;--help-small:#F0B44C;--help-together:#B38BE0;--help-unknown:#C9CED9;
+  /* Сцена карты: небо, горы, луг, река, мостик, домик */
+  --sky-top:#BFE3FF;--sky-bottom:#EAF6FF;--sun:#FFE27A;--mtn1:#B7CEF1;--mtn1-shade:#93B0E2;--mtn2:#C9DBF7;--mtn2-shade:#A8C3EA;--mtn3:#9DB9E6;--mtn3-shade:#7C9FD6;
+  --meadow-a:#BFE8A6;--meadow-b:#86D58B;--river:#5DB8F5;--river-hi:#9EDCFF;--bridge:#B07A44;--plank:#D4A36B;--house-wall:#FFE9C9;--roof:#E5675F;--door:#9A6B3F;
   --ink-rgb:19,32,107;   /* тот же тёмно-синий для теней: rgba(var(--ink-rgb),.15) */
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -101,7 +104,7 @@ label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bot
 .big{font-size:44px;font-weight:900;text-align:center}
 
 .wallet{display:flex;align-items:center;gap:6px;background:var(--white);border-radius:999px;padding:6px 14px 6px 8px;font-weight:800;box-shadow:0 4px 12px rgba(var(--ink-rgb),.12)}.wallet img{height:26px}
-.routewrap{margin:4px -4px 8px}.route{display:block;overflow:visible}.rnode{cursor:pointer;outline:none}
+.routewrap{margin:4px -4px 8px;border-radius:26px;overflow:hidden;box-shadow:0 8px 22px rgba(var(--ink-rgb),.12)}.route{display:block;overflow:visible}.rnode{cursor:pointer;outline:none}
 
 /* Иконки интерфейса (Ionicons, наши PNG наград) */
 .ico{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}

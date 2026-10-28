@@ -29,9 +29,9 @@ function trailPoints(pts,SL){
   return out;
 }
 // Дорожка: полоса-картинка (бесшовная по длине) режется на короткие кусочки, каждый поворачивается по касательной к пути
-function trailSvg(pts,img){
+function trailSvg(tp,img){
   const SL=9,TL=100,TH=22,NW=512,NH=103,sw=NW*SL*1.08/TL;   // длина кусочка, длина «плитки» полосы, высота дорожки, размер исходной картинки
-  return trailPoints(pts,SL).map(p=>{const u=((p.s-SL/2)%TL)/TL*NW;
+  return tp.map(p=>{const u=((p.s-SL/2)%TL)/TL*NW;
     return`<g transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)}) rotate(${p.ang.toFixed(1)})"><svg x="${-SL*.54}" y="${-TH/2}" width="${SL*1.08}" height="${TH}" viewBox="${u.toFixed(1)} 0 ${sw.toFixed(1)} ${NH}" preserveAspectRatio="none"><image href="${img}" width="${NW}" height="${NH}" preserveAspectRatio="none"/><image href="${img}" x="${NW}" width="${NW}" height="${NH}" preserveAspectRatio="none"/></svg></g>`}).join('');
 }
 
@@ -45,16 +45,17 @@ function viewRoute(){
   if(!n)return h+`<div class="card"><b>На сегодня заданий пока нет</b><p class="muted" style="margin:4px 0 0">Попроси родителя добавить первое задание.</p></div>
     <button class="btn full" data-act="toparent">Добавить задачу</button>`;
   // координаты: старт внизу, вершина вверху
-  const H=ROUTE_TOP*2+ROUTE_STEP*n;
-  const pos=i=>({x:ROUTE_X[i%ROUTE_X.length],y:H-ROUTE_TOP-ROUTE_STEP*(i+0.5)});
+  const H0=ROUTE_TOP*2+ROUTE_STEP*n,H=Math.max(H0,540);   // H0 — по числу заданий, H — с запасом луга внизу (как extra в Android)
+  const pos=i=>({x:ROUTE_X[i%ROUTE_X.length],y:H0-ROUTE_TOP-ROUTE_STEP*(i+0.5)});
   const sum={x:180,y:ROUTE_TOP-10};
-  const pts=[{x:180,y:H-40},...nodes.map((_,i)=>pos(i)),{x:180,y:sum.y+34}];   // дорожка заканчивается у холмика флага
+  const pts=[{x:180,y:H0-40},...nodes.map((_,i)=>pos(i)),{x:180,y:sum.y+34}];   // дорожка заканчивается у холмика флага
   let d=`M${pts[0].x},${pts[0].y}`;
   for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],my=(a.y+b.y)/2;d+=` C${a.x},${my} ${b.x},${my} ${b.x},${b.y}`}
-  let svg=`<svg class="route" viewBox="0 0 ${ROUTE_W} ${H}" width="100%" role="img" aria-label="Карта маршрута: ${n} заданий">`;
+  const tp=trailPoints(pts,9),br=tp.reduce((b,q)=>Math.abs(q.y-385)<Math.abs(b.y-385)?q:b,tp[0]),bridge=Math.abs(br.y-385)<40?br:null;   // мостик там, где дорожка пересекает реку
+  let svg=`<svg class="route" viewBox="0 0 ${ROUTE_W} ${H}" width="100%" role="img" aria-label="Карта маршрута: ${n} заданий">`+sceneSvg(H,H0,bridge);
   // деревья по краям карты (за дорожкой и узлами)
-  for(let y=70,i=0;y<H-40;y+=128,i++){const x=i%2?334:26;svg+=`<image href="${look.trees}" x="${x-24}" y="${y-28}" width="48" height="56" aria-hidden="true"/>`}
-  svg+=`<path d="${d}" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="30" stroke-linecap="round"/>${trailSvg(pts,look.trail)}`;
+  for(let y=390,i=0;y<H-30;y+=128,i++){const x=i%2?334:26;svg+=`<image href="${look.trees}" x="${x-24}" y="${y-28}" width="48" height="56" aria-hidden="true"/>`}
+  svg+=`<path d="${d}" fill="none" stroke="rgba(120,90,40,.18)" stroke-width="27" stroke-linecap="round"/>${trailSvg(tp,look.trail)}`;
   nodes.forEach((x,i)=>{const p=pos(i),c={DONE:COL.green,WAIT:COL.orange,CUR:COL.blue,OPEN:COL.white}[x.state];
     const mark=x.state==='DONE'?`<path d="M-12,0 L-4,8 L13,-9" fill="none" stroke="${COL.white}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`
       :x.state==='WAIT'?`<g transform="translate(-15,-15) scale(.0586)" color="${COL.white}" fill="currentColor">`+ICO['hourglass-outline']+'</g>'
