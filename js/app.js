@@ -22,7 +22,7 @@ const CATALOG=[
 // goals: [{id,title,target(1..7),status:ACTIVE|ARCHIVED,created:'YYYY-MM-DD'}]; log: [{day:'YYYY-MM-DD',title}] — подтверждённые задания (прогресс целей считается из него, как GoalsReader в Android)
 // templates: [{id,title,desc,coins,xp,rec:'daily'|'weekdays',active}] — шаблоны повторяющихся заданий; на каждый день создаётся задание с id «шаблон:дата» (повтор не дублируется)
 // task.date: 'YYYY-MM-DD' (задание на этот день); у старых заданий даты нет — они считаются «на сегодня» всегда
-const blank=()=>({tasks:[],xp:0,coins:0,wishes:[],purchases:[],goals:[],log:[],templates:[],skills:[]});
+const blank=()=>({tasks:[],xp:0,coins:0,wishes:[],purchases:[],goals:[],log:[],templates:[],skills:[],rets:[]});
 // skills: [{id,title,stage:LEARNING|PRACTICING|INDEPENDENT|HABIT,since,status}]; task/template/goal.skill — id навыка (или нет); log: {day,title,skill,help} (help — как справился: INDEPENDENT|AFTER_REMINDER|SMALL_HELP|TOGETHER|UNKNOWN)
 const GOAL_TEMPLATES=[
  {key:'MORNING_ALONE',title:'Собираться утром без лишних напоминаний',target:5},
@@ -56,7 +56,7 @@ function goalProgress(k,g){
 const freshIntro=()=>({step:0,done:false,family:{},wish:{},wk:null,draft:null});
 function normalize(s){
   s.intro=s.intro||freshIntro();
-  for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];k.templates=k.templates||[];k.skills=k.skills||[];
+  for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];k.templates=k.templates||[];k.skills=k.skills||[];k.rets=k.rets||[];
     (k.spent||[]).forEach(p=>k.purchases.push({id:uid(),wishId:'',title:p.title,price:p.price,status:'DELIVERED'}));delete k.spent}
   return s;
 }
@@ -79,7 +79,7 @@ const K=()=>S.kids[S.cur], kinfo=()=>KIDS.find(k=>k.id===S.cur);
 
 // ---- Правила (как TaskRepositoryRules.kt) ----
 function submit(id){const t=K().tasks.find(x=>x.id===id&&x.status==='AVAILABLE');if(t){t.status='WAITING_APPROVAL';t.sub=dayStr();save()}}
-function reject(id){const t=K().tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(t){t.status='AVAILABLE';save()}}
+function reject(id){const k=K(),t=k.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(t){t.status='AVAILABLE';k.rets.push({day:dayStr(),title:t.title});save()}}   // rets — журнал возвратов на доработку (для отчёта)
 function approve(id,help){const k=K(),t=k.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(!t)return; // награда ровно один раз
   t.status='COMPLETED';k.xp+=t.xp;k.coins+=t.coins;k.log.push({day:dayStr(),title:t.title,skill:t.skill||null,help:help||'UNKNOWN'});save()}
 function del(id){const k=K(),i=k.tasks.findIndex(x=>x.id===id&&x.status==='AVAILABLE');if(i>=0){k.tasks.splice(i,1);save()}}
@@ -405,6 +405,7 @@ function viewParent(){
   const tps=k.templates.filter(x=>x.active);
   if(tps.length){h+=`<div class="sec"><h2>Повторяются</h2><span class="cnt">${tps.length}</span></div>`;
     tps.forEach(x=>h+=`<div class="task c3"><img class="ic" src="${iconFor(x.title)}" alt=""><div class="tx"><h3>${esc(x.title)}</h3><div class="meta"><span>${x.rec==='daily'?'каждый день':'по будням'}</span><span>${I.coin} ${x.coins}</span></div></div><button class="go" data-act="deltpl" data-id="${x.id}" aria-label="Остановить повтор">${ico('trash-outline')}</button></div>`)}
+  h+=reportBlock(k);
   h+=parentSkillsBlock(k);
   h+='<div class="sec"><h2>Цели на неделю</h2></div><button class="btn sm soft" data-act="addgoal">+ Цель</button><div style="height:10px"></div>';
   k.goals.filter(g=>g.status==='ACTIVE').forEach(g=>{const p=goalProgress(k,g);h+=`<div class="task c1"><div class="tx"><h3>${esc(g.title)}</h3><div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span></div></div><button class="go" data-act="delgoal" data-id="${g.id}" aria-label="Убрать цель">${ico('trash-outline')}</button></div>`});
@@ -451,6 +452,7 @@ document.addEventListener('click',async e=>{
   else if(act.startsWith('i_')){introAct(act,b)}
   else if(act==='newpin'){const p=pinVal();if(!/^\d{4,6}$/.test(p))return toast('PIN: 4–6 цифр');await setPin(p);unlocked=true;introOpen=!S.intro.done}
   else if(act==='unlock'){if(await checkPin(pinVal())){unlocked=true;introOpen=!S.intro.done}else return toast('Неверный PIN')}
+  else if(act==='range'){reportRange=id==='4w'?'4w':'week'}
   else if(act==='review'){return reviewDialog(id)}
   else if(act==='stage'){moveStage(K(),id,Number(b.dataset.dir))}
   else if(act==='reject'){reject(id)}

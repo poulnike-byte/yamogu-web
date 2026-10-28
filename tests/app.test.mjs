@@ -128,3 +128,21 @@ test('Звук: играет при подтверждении, родитель
   await p.click('[data-act=sound]'); assert.equal(await p.evaluate(() => S.sound), false); assert.ok(await p.isVisible('text=Звук: выкл'));
   await approveOne('a2'); assert.equal(await p.evaluate(() => window.__plays), 1, 'при выключенном звуке тишина');
 }));
+
+test('Отчёт родителя: неделя и 4 недели, возвраты, уровни помощи, сравнение', async () => session(async s => {
+  let p = s.page; await asKirill(p); await toParent(p, '2468');
+  await p.evaluate(() => {
+    const d = dayStr();
+    K().log.push({ day: d, title: 'a', help: 'INDEPENDENT' }, { day: d, title: 'b', help: 'SMALL_HELP' }, { day: d, title: 'c', help: 'UNKNOWN' }, { day: addDays(d, -15), title: 'old', help: 'INDEPENDENT' });
+    K().tasks.push({ id: 'r1', title: 'R', desc: '', coins: 1, xp: 1, status: 'AVAILABLE' }); submit('r1'); reject('r1');
+    K().tasks.push({ id: 'r2', title: 'R2', desc: '', coins: 1, xp: 1, status: 'AVAILABLE' }); submit('r2');
+    render();
+  });
+  assert.ok(await p.isVisible('text=Уровень помощи при подтверждённых'));
+  assert.deepEqual(await p.evaluate(() => { const w = periodData(K(), mondayOf(dayStr()), addDays(mondayOf(dayStr()), 6)); return [w.approved, w.waiting, w.returned, w.assessed]; }), [3, 1, 1, 2]);
+  assert.ok(await p.isVisible('text=Для сравнения с прошлой неделей пока мало'));
+  await p.click('[data-act=range][data-id="4w"]');
+  assert.equal(await p.evaluate(() => periodData(K(), addDays(dayStr(), -27), dayStr()).approved), 4);
+  assert.ok(await p.isVisible('text=Из 6 отправленных'), 'в 4 недели: 4 подтверждено + 1 ждёт + 1 возвращено');
+  assert.ok(await p.isVisible('text=«Не оценено» значит'));
+}));
