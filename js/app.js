@@ -435,6 +435,8 @@ document.addEventListener('click',async e=>{
   else if(act==='decoequip'){if(equipDeco(K(),id))toast('Надето')}
   else if(act==='shopsw'){S.shopOff=!S.shopOff;save()}
   else if(act==='decorefund'){if(refundDeco(K(),id))toast('Монеты возвращены')}
+  else if(act==='backup'){return exportBackup()}
+  else if(act==='restore'){document.getElementById('bk-file').click();return}
   else if(act==='lock'){unlocked=false;introOpen=false;parentPage='hub'}
   else if(act==='addtask'){return taskForm({})}
   else if(act==='catalog'){

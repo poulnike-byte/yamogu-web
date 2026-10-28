@@ -293,3 +293,33 @@ test('Украшения карты: покупка, «Надеть», дост�
   await p.evaluate(() => { K().deco.bought.find(b => b.id === 'flag_blue').at = Date.now() - 25 * 3600 * 1000; });
   assert.equal(await p.evaluate(() => refundDeco(K(), 'flag_blue')), false, 'позже суток возврата нет');
 }));
+
+test('Резервная копия: сохранить в файл, восстановить, плохие файлы отклоняются, PIN не входит в копию', async () => session(async s => {
+  let p = s.page; await asKirill(p); await toParent(p, '2468', 'settings');
+  await p.evaluate(() => { K().coins = 77; K().tasks.push({ id: 'b1', date: dayStr(), title: 'Копируемое', desc: '', coins: 5, xp: 5, status: 'AVAILABLE' }); K().name = 'Кирюша'; save(); render(); });
+  // содержимое копии
+  const text = await p.evaluate(() => buildBackup());
+  const o = JSON.parse(text);
+  assert.equal(o.app, 'yamogu-web'); assert.equal(o.data.pin, undefined, 'PIN не должен попадать в файл'); assert.equal(o.data.kids.kirill.coins, 77);
+  // кнопка «Сохранить копию» скачивает файл (в тесте нет окна «Поделиться»)
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('[data-act=backup]')]);
+  assert.match(dl.suggestedFilename(), /^yamogu-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  const saved = JSON.parse(fs.readFileSync(await dl.path(), 'utf8')); assert.equal(saved.data.kids.kirill.name, 'Кирюша');
+  assert.ok(await p.isVisible('text=Последняя копия:'), 'видна дата последней копии');
+  // портим данные и восстанавливаем из файла через интерфейс
+  await p.evaluate(() => { K().coins = 0; K().tasks = []; K().name = 'Другое'; save(); render(); });
+  const file = path.join(os.tmpdir(), 'yamogu-restore-test.json'); fs.writeFileSync(file, text);
+  await p.setInputFiles('#bk-file', file);
+  assert.ok(await p.isVisible('text=Восстановить данные?')); assert.ok(await p.isVisible('text=Кирилл: 1 задание, монет 77'));
+  await p.click('#rs-no'); assert.equal(await p.evaluate(() => K().coins), 0, '«Отмена» ничего не меняет');
+  await p.setInputFiles('#bk-file', file); await p.click('#rs-ok');
+  assert.deepEqual(await p.evaluate(() => [K().coins, K().tasks.length, K().name, !!S.pin]), [77, 1, 'Кирюша', true], 'данные вернулись, PIN этого телефона остался');
+  // плохие файлы
+  for (const bad of ['не json', '{"app":"other","data":{}}', '{"app":"yamogu-web","format":1,"data":{"kids":{}}}', '{"app":"yamogu-web","format":99,"data":{}}']) {
+    const r = await p.evaluate(t => parseBackup(t), bad); assert.ok(r.err, 'отклонён: ' + bad.slice(0, 20));
+  }
+  assert.equal(await p.evaluate(() => K().coins), 77, 'после плохих файлов данные целы');
+  // напоминание на главной странице кабинета: свежая копия — молчим, старая — напоминаем
+  assert.ok(await p.isVisible('text=Моя семья')); assert.ok(!await p.isVisible('text=Сделайте копию данных'));
+  await p.evaluate(() => { S.lastBackup = addDays(dayStr(), -20); render(); }); assert.ok(await p.isVisible('text=Сделайте копию данных'));
+}));

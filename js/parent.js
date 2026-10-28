@@ -22,7 +22,7 @@ function parentHub(k){
   const wa=k.tasks.filter(t=>t.status==='WAITING_APPROVAL').length,pd=k.purchases.filter(isOpenP),late=pd.filter(p=>waitDays(p)>=OVERDUE_DAYS).length;
   let h=`<div class="top"><div class="hello">Кабинет родителя<b>Моя семья</b></div></div>
   <div class="kids">${KIDS.map(x=>{const a=S.kids[x.id].age;return`<button class="kid ${x.id===S.cur?'on':''}" data-act="who" data-id="${x.id}" data-stay="1" aria-label="${x.name}${a?', '+ageT(a):''}${x.id===S.cur?', выбрано':''}"><img src="${x.img}" alt="">${x.name}${a?`<span class="small" style="display:block;font-weight:400">${ageT(a)}</span>`:''}</button>`}).join('')}</div>`;
-  h+=tile('review','ref_stat_check','На проверке',wa?'ждут проверки: '+wa:'',0)+tile('tasks','ref_task_bag','Задания','назначить, расписание и повторы',1)
+  h+=backupNag()+tile('review','ref_stat_check','На проверке',wa?'ждут проверки: '+wa:'',0)+tile('tasks','ref_task_bag','Задания','назначить, расписание и повторы',1)
     +tile('report','ref_nav_bars','Прогресс и помощь','отчёты по неделям, навыки',2)+tile('goals','ref_stat_target','Цели','недельные цели',3)
     +tile('wishes','ref_stat_star','Желания',pd.length?(late?`ждут выдачи: ${pd.length}, давно: ${late}`:'ждут выдачи: '+pd.length):'награды, которые ребёнок копит',4)
     +`<div class="task c0" data-act="i_open" role="button" tabindex="0" style="cursor:pointer"><img class="ic" src="img/ref_skill_book.png" alt=""><div class="tx"><h3>${S.intro.done?'Знакомство: пройти заново':'Знакомство с семьёй'}</h3><div class="small">о семье, как мы благодарим, желания ребёнка</div></div><span style="font-size:26px;font-weight:800;color:var(--blue)" aria-hidden="true">›</span></div>`
@@ -64,7 +64,7 @@ function pageSettings(k){
   <div class="task c1" data-act="chpin" role="button" tabindex="0" style="cursor:pointer"><div class="tx"><h3>Родительский PIN</h3><div class="small">сменить PIN входа в кабинет</div></div><span style="font-size:26px;font-weight:800;color:var(--blue)" aria-hidden="true">›</span></div>
   <div class="task c2" data-act="sound" role="button" tabindex="0" style="cursor:pointer"><div class="tx"><h3>Звук наград</h3><div class="small">${S.sound===false?'выключен':'включён'}: нажмите, чтобы ${S.sound===false?'включить':'выключить'}</div></div></div>
   <div class="task c3" data-act="help" role="button" tabindex="0" style="cursor:pointer"><div class="tx"><h3>Помощь</h3><div class="small">как устроены задания, награды и PIN</div></div><span style="font-size:26px;font-weight:800;color:var(--blue)" aria-hidden="true">›</span></div>
-  ${parentDecoBlock(k)}<div class="sec"><h2>Данные семьи</h2></div><p class="small" style="margin:0 4px 8px">Данные хранятся только на этом устройстве. Удаление нельзя отменить.</p><button class="btn sm red" data-act="reset">Удалить данные семьи</button>`;
+  ${backupBlock()}${parentDecoBlock(k)}<div class="sec"><h2>Данные семьи</h2></div><p class="small" style="margin:0 4px 8px">Данные хранятся только на этом устройстве. Удаление нельзя отменить.</p><button class="btn sm red" data-act="reset">Удалить данные семьи</button>`;
 }
 // ---- окна ----
 function kidForm(){
