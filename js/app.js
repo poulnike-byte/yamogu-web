@@ -20,7 +20,9 @@ const CATALOG=[
 ];
 // wishes: [{id,title,price}], purchases: [{id,wishId,title,price,status:BOUGHT|POSTPONED|DELIVERED|CANCELLED}]
 // goals: [{id,title,target(1..7),status:ACTIVE|ARCHIVED,created:'YYYY-MM-DD'}]; log: [{day:'YYYY-MM-DD',title}] — подтверждённые задания (прогресс целей считается из него, как GoalsReader в Android)
-const blank=()=>({tasks:[],xp:0,coins:0,wishes:[],purchases:[],goals:[],log:[]});
+// templates: [{id,title,desc,coins,xp,rec:'daily'|'weekdays',active}] — шаблоны повторяющихся заданий; на каждый день создаётся задание с id «шаблон:дата» (повтор не дублируется)
+// task.date: 'YYYY-MM-DD' (задание на этот день); у старых заданий даты нет — они считаются «на сегодня» всегда
+const blank=()=>({tasks:[],xp:0,coins:0,wishes:[],purchases:[],goals:[],log:[],templates:[]});
 const GOAL_TEMPLATES=[
  {key:'MORNING_ALONE',title:'Собираться утром без лишних напоминаний',target:5},
  {key:'BAG_EVENING',title:'Собирать рюкзак с вечера',target:5},
@@ -33,6 +35,18 @@ const mondayOf=s=>{const [y,m,d]=s.split('-').map(Number),dt=new Date(y,m-1,d);d
 const addDays=(s,n)=>{const [y,m,d]=s.split('-').map(Number),dt=new Date(y,m-1,d+n);return dayStr(dt)};
 // Сколько подтверждённых заданий в неделе, начинающейся в понедельник mon (строки YYYY-MM-DD сравниваются как текст)
 const weekCount=(k,mon)=>{const sun=addDays(mon,6);return k.log.filter(e=>e.day>=mon&&e.day<=sun).length};
+const isToday=t=>!t.date||t.date===dayStr();
+const todays=k=>k.tasks.filter(isToday);
+const occursOn=(rec,s)=>{const [y,m,d]=s.split('-').map(Number),w=new Date(y,m-1,d).getDay();return rec==='daily'||(rec==='weekdays'&&w>=1&&w<=5)};
+// Создаёт на сегодня задания по активным шаблонам; безопасно вызывать сколько угодно раз. Возвращает, сколько создано.
+function ensureOcc(){
+  const day=dayStr();let n=0;
+  for(const id in S.kids){const k=S.kids[id];
+    k.templates.forEach(tp=>{if(!tp.active||!occursOn(tp.rec,day))return;const oid=tp.id+':'+day;
+      if(k.tasks.some(t=>t.id===oid))return;
+      k.tasks.push({id:oid,tpl:tp.id,date:day,title:tp.title,desc:tp.desc,coins:tp.coins,xp:tp.xp,status:'AVAILABLE'});n++})}
+  if(n)save();return n;
+}
 function goalProgress(k,g){
   const thisMon=mondayOf(dayStr()),done=weekCount(k,thisMon);let mon=mondayOf(g.created||thisMon),reached=0,guard=0;
   while(mon<=thisMon&&guard++<520){if(weekCount(k,mon)>=g.target)reached++;mon=addDays(mon,7)}
@@ -41,7 +55,7 @@ function goalProgress(k,g){
 const freshIntro=()=>({step:0,done:false,family:{},wish:{},wk:null,draft:null});
 function normalize(s){
   s.intro=s.intro||freshIntro();
-  for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];
+  for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];k.templates=k.templates||[];
     (k.spent||[]).forEach(p=>k.purchases.push({id:uid(),wishId:'',title:p.title,price:p.price,status:'DELIVERED'}));delete k.spent}
   return s;
 }
@@ -253,12 +267,12 @@ let tabChanged=false,routeFocus=true;   // при входе на «Маршру
 const needHomeHint=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!S.hintHome;
 const homeHint=()=>needHomeHint()?'<div class="card"><b>Чтобы данные не пропали</b><p class="muted" style="margin:4px 0 10px">Нажмите «Поделиться» → «На экран Домой» и открывайте ЯмогУ! со значка.</p><button class="btn sm soft" data-act="hidehint">Понятно</button></div>':'';
 function render(){
+  ensureOcc();
   if(!S.cur){
     $app.innerHTML=`<main class="welcome"><img class="logo" src="img/ref_logo.png" alt="ЯмогУ!"><p>Я учусь. Я пробую. Я могу!</p>
     <h2>Кто сегодня играет?</h2>${homeHint()}<div class="pick">${KIDS.map(k=>`<button class="${k.cls}" data-act="who" data-id="${k.id}"><img src="${k.img}" alt="">${k.name}</button>`).join('')}</div></main>`;
     return;
   }
-  const waiting=K().tasks.filter(t=>t.status==='WAITING_APPROVAL').length;
   const nav=(id,ic,l,lab)=>`<button data-tab="${id}" class="${tab===id?'on':''}" aria-label="${lab||l}${tab===id?', выбрано':''}">${navIcon(ic,tab===id)}${l}</button>`;
   $app.innerHTML=`<main>${({home:viewTasks,goals:viewGoals,route:viewRoute,progress:viewProgress,wishes:viewRewards,parent:viewParent}[tab]||viewRoute)()}</main>
   <nav>${nav('home','home','Главная')}${nav('goals','star','Мои цели')}${nav('route','check','Маршрут')}${nav('progress','bars','Прогресс')}${nav('wishes','cart','Желания','Мои желания')}</nav>`;
@@ -276,13 +290,13 @@ function topbar(title){const ki=kinfo();return `<div class="top"><div class="ava
 
 function viewTasks(){
   const k=K(),ki=kinfo(),lvl=Math.floor(k.xp/200)+1,inLvl=k.xp%200;
-  const av=k.tasks.filter(t=>t.status==='AVAILABLE'),wa=k.tasks.filter(t=>t.status==='WAITING_APPROVAL'),co=k.tasks.filter(t=>t.status==='COMPLETED');
-  const day=k.tasks.length-0, done=co.length+wa.length;
+  const tt=todays(k),av=tt.filter(t=>t.status==='AVAILABLE'),wa=tt.filter(t=>t.status==='WAITING_APPROVAL'),co=tt.filter(t=>t.status==='COMPLETED');
+  const done=co.length+wa.length;
   let h=topbar('Привет,')+`<div class="hero"><img class="hk" src="${ki.img}" alt="">
    <div class="info"><h2>Уровень ${lvl}</h2><div class="bar"><i style="width:${inLvl/2}%"></i></div><div class="small">${inLvl} / 200 XP</div>
    <div class="stats"><div class="st"><img src="img/ref_stat_star.png" alt="">${k.xp}<span>XP</span></div><div class="st"><img src="img/skill_money.png" alt="">${avail(k)}<span>монет</span></div></div></div></div>
-   <div class="sec"><h2>Мои задания</h2><span class="cnt">${done}/${k.tasks.length}</span></div>`;
-  if(!k.tasks.length)h+='<div class="empty">Пока нет заданий.<br>Попроси родителя добавить их: кнопка «Родителям» внизу.</div>';
+   <div class="sec"><h2>Мои задания</h2><span class="cnt">${done}/${tt.length}</span></div>`;
+  if(!tt.length)h+='<div class="empty">На сегодня заданий нет.<br>Попроси родителя добавить их: кнопка «Родителям» внизу.</div>';
   av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3>${t.desc?`<div class="desc">${esc(t.desc)}</div>`:''}<div class="meta">${rew(t)}</div></div><button class="go" data-act="submit" data-id="${t.id}" aria-label="Готово">›</button></div>`);
   wa.forEach(t=>h+=`<div class="task c2"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">Ждёт проверки родителя ⏳</div></div></div>`);
   co.slice(-8).reverse().forEach(t=>h+=`<div class="task c3" style="opacity:.8"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div><img class="ok" src="img/ref_check_done.png" alt=""></div>`);
@@ -348,7 +362,7 @@ function viewParent(){
     <button class="btn full" data-act="${S.pin?'unlock':'newpin'}">${S.pin?'Войти':'Установить PIN'}</button>${S.pin?'<button class="btn sm soft" data-act="forgot" style="margin-top:12px">Забыли PIN?</button>':''}</div>`;
   }
   if(introOpen)return introView();
-  const k=K(),wa=k.tasks.filter(t=>t.status==='WAITING_APPROVAL'),av=k.tasks.filter(t=>t.status==='AVAILABLE');
+  const k=K(),wa=k.tasks.filter(t=>t.status==='WAITING_APPROVAL'),av=todays(k).filter(t=>t.status==='AVAILABLE');
   let h=`<div class="top"><div class="hello"><b>Кабинет родителя</b></div></div>
   <div class="kids">${KIDS.map(x=>`<button class="kid ${x.id===S.cur?'on':''}" data-act="who" data-id="${x.id}" data-stay="1"><img src="${x.img}" alt="">${x.name}</button>`).join('')}</div>
   <button class="btn sm soft" data-act="i_open" style="margin-bottom:12px">${S.intro.done?'Знакомство: пройти заново':'Знакомство с семьёй'}</button>
@@ -361,6 +375,9 @@ function viewParent(){
     pd.forEach(p=>h+=`<div class="task c4"><div class="tx"><h3>🎁 ${esc(p.title)}</h3><div class="meta">🪙 ${p.price}${p.status==='POSTPONED'?' · отложено':''}</div><div class="row" style="margin-top:8px"><button class="btn sm green" data-act="deliver" data-id="${p.id}">Выдано</button><button class="btn sm soft" data-act="postpone" data-id="${p.id}">Отложить</button><button class="btn sm red" data-act="cancelp" data-id="${p.id}">Отменить</button></div></div></div>`)}
   h+=`<div class="sec"><h2>Все задания</h2></div><div class="row" style="margin-bottom:12px"><button class="btn sm" data-act="addtask">+ Своё</button><button class="btn sm soft" data-act="catalog">Из каталога</button></div>`;
   av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div><button class="go" data-act="del" data-id="${t.id}">🗑</button></div>`);
+  const tps=k.templates.filter(x=>x.active);
+  if(tps.length){h+=`<div class="sec"><h2>Повторяются</h2><span class="cnt">${tps.length}</span></div>`;
+    tps.forEach(x=>h+=`<div class="task c3"><img class="ic" src="${iconFor(x.title)}" alt=""><div class="tx"><h3>${esc(x.title)}</h3><div class="meta"><span>${x.rec==='daily'?'каждый день':'по будням'}</span><span>🪙 ${x.coins}</span></div></div><button class="go" data-act="deltpl" data-id="${x.id}" aria-label="Остановить повтор">🗑</button></div>`)}
   h+='<div class="sec"><h2>Цели на неделю</h2></div><button class="btn sm soft" data-act="addgoal">+ Цель</button><div style="height:10px"></div>';
   k.goals.filter(g=>g.status==='ACTIVE').forEach(g=>{const p=goalProgress(k,g);h+=`<div class="task c1"><div class="tx"><h3>${esc(g.title)}</h3><div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span></div></div><button class="go" data-act="delgoal" data-id="${g.id}" aria-label="Убрать цель">🗑</button></div>`});
   h+='<div class="sec"><h2>Желания ребёнка</h2></div><button class="btn sm soft" data-act="addwish">+ Желание</button><div style="height:10px"></div>';
@@ -374,11 +391,14 @@ function taskForm(pre){
    <label>Описание / шаги</label><textarea id="f-d" rows="3">${esc(pre.d||'')}</textarea>
    <div class="grid"><div><label>Монеты</label><input id="f-c" type="number" inputmode="numeric" value="${pre.c??10}"></div>
    <div><label>XP</label><input id="f-x" type="number" inputmode="numeric" value="${pre.x??10}"></div></div>
+   <label>Когда</label><select id="f-r"><option value="">Один раз, сегодня</option><option value="daily">Каждый день</option><option value="weekdays">По будням (пн–пт)</option></select>
    <button class="btn full" id="f-ok">Добавить</button>`);
   m.querySelector('#f-ok').onclick=()=>{
     const t=m.querySelector('#f-t').value.trim();if(!t)return toast('Нужно название');
     const n=(id)=>Math.min(10000,Math.max(0,parseInt(m.querySelector(id).value)||0));
-    K().tasks.push({id:uid(),title:t,desc:m.querySelector('#f-d').value.trim(),coins:n('#f-c'),xp:n('#f-x'),status:'AVAILABLE'});
+    const d=m.querySelector('#f-d').value.trim(),rec=m.querySelector('#f-r').value;
+    if(rec){K().templates.push({id:uid(),title:t,desc:d,coins:n('#f-c'),xp:n('#f-x'),rec,active:true});ensureOcc()}   // задание на сегодня появится само, если сегодня подходит по расписанию
+    else K().tasks.push({id:uid(),date:dayStr(),title:t,desc:d,coins:n('#f-c'),xp:n('#f-x'),status:'AVAILABLE'});
     save();m.remove();render();
   };
 }
@@ -403,6 +423,8 @@ document.addEventListener('click',async e=>{
   else if(act==='approve'){approve(id);toast('Награда выдана ⭐')}
   else if(act==='reject'){reject(id)}
   else if(act==='del'){del(id)}
+  else if(act==='deltpl'){const k=K(),x=k.templates.find(q=>q.id===id);   // остановить повтор: завтрашних заданий не будет, сегодняшнее невыполненное убирается; история остаётся
+    if(x){x.active=false;k.tasks=k.tasks.filter(t=>!(t.tpl===id&&t.status==='AVAILABLE'));save();toast('Повтор остановлен')}}
   else if(act==='addgoal'){return goalForm({})}
   else if(act==='delgoal'){const g=K().goals.find(x=>x.id===id);if(g){g.status='ARCHIVED';save();toast('Цель убрана')}}   // архив: история недель сохраняется
   else if(act==='delwish'){K().wishes=K().wishes.filter(x=>x.id!==id);save()}

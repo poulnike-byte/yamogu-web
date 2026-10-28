@@ -2,13 +2,14 @@
 // Экран «Маршрут» (аналог renderRouteMap / RouteMapView в Android).
 // Версия 1: узлы — задания ребёнка (сделано → ждёт проверки → доступные), вершина с флагом открывается,
 // когда все задания выполнены. Нажатие на узел открывает окно задания; награду начисляет только родитель.
-// Пока без дат («на сегодня») — в вебе у заданий их ещё нет.
+// Показываются задания «на сегодня» (todays в app.js): с сегодняшней датой и старые без даты.
 const ROUTE_W=360, ROUTE_STEP=104, ROUTE_TOP=96, ROUTE_X=[80,180,280,180];   // зигзаг из 4 позиций по горизонтали
 
 function routeNodes(k){
-  const done=k.tasks.filter(t=>t.status==='COMPLETED').slice(-6);
-  const wait=k.tasks.filter(t=>t.status==='WAITING_APPROVAL');
-  const open=k.tasks.filter(t=>t.status==='AVAILABLE');
+  const tt=todays(k);   // на маршруте только задания на сегодня
+  const done=tt.filter(t=>t.status==='COMPLETED').slice(-6);
+  const wait=tt.filter(t=>t.status==='WAITING_APPROVAL');
+  const open=tt.filter(t=>t.status==='AVAILABLE');
   const list=[...done,...wait,...open];
   const curId=(open[0]||{}).id;
   return list.map(t=>({t,state:t.status==='COMPLETED'?'DONE':t.status==='WAITING_APPROVAL'?'WAIT':t.id===curId?'CUR':'OPEN'}));
