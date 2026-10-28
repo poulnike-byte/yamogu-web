@@ -214,7 +214,7 @@ function introView(){
       <div class="row" style="align-items:center;margin-top:8px"><input class="price" type="number" inputmode="numeric" data-price="${i}" value="${r.price}"><span class="small">монет · копить ~${days(r.price)} дн.</span></div></div>`).join('')+
     `<div class="row" style="flex-wrap:nowrap"><input id="addw" placeholder="Своё желание" maxlength="60" style="margin:0"><button class="btn sm soft" data-act="i_addwish">+</button></div><p class="ip muted" style="margin-top:12px">Подарки — это ваше обещание ребёнку. Если вы не выдали подарок за 7 дней, мы напомним.</p>`;
     nextLbl=n?`Сохранить в магазин (${n})`:'Выберите хотя бы одно желание';next=n>0}
-  else if(st===FIN){const k=S.kids[I.wk];body=title('Знакомство завершено',24)+p(`Желания, которые увидит ${kidName()} во вкладке «Награды»:`)+(k.wishes.map(w=>`<div class="card"><b>${esc(w.title)}</b><div class="small">🪙 ${w.price}</div></div>`).join(''))+
+  else if(st===FIN){const k=S.kids[I.wk];body=title('Знакомство завершено',24)+p(`Желания, которые увидит ${kidName()} во вкладке «Награды»:`)+(k.wishes.map(w=>`<div class="card"><b>${esc(w.title)}</b><div class="small">${I.coin} ${w.price}</div></div>`).join(''))+
     p('Монеты придут за подтверждённые вами дела. Нажав «Хочу!», ребёнок попросит подарок, а выдаёте его вы.','muted')+`<div class="row"><button class="btn sm soft" data-act="i_another">Заполнить для другого ребёнка</button></div>`;nextLbl='Готово'}
   return `<div class="top"><div class="hello"><b>Знакомство</b></div><button class="gear" data-act="i_exit" title="Выйти из знакомства">✕</button></div>${prog}<div style="height:12px"></div>${body}
    <div class="row" style="margin-top:14px;flex-wrap:nowrap">${back?'<button class="btn soft" data-act="i_back">Назад</button>':''}<button class="btn full" data-act="i_next" ${next?'':'disabled'}>${nextLbl}</button></div>`;
@@ -262,7 +262,7 @@ const $app=document.getElementById('app');
 function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),1800)}
 function modal(html){const m=document.createElement('div');m.className='modal';m.innerHTML='<div class="sheet">'+html+'</div>';
   m.addEventListener('click',e=>{if(e.target===m)m.remove()});document.body.appendChild(m);return m}
-const rew=t=>`<span>⭐ ${t.xp} XP</span><span>🪙 ${t.coins}</span>`;
+const rew=t=>`<span>${I.star} ${t.xp} XP</span><span>${I.coin} ${t.coins}</span>`;
 
 let tabChanged=false,routeFocus=true;   // при входе на «Маршрут» центрировать экран на текущем узле (как в Android)
 const needHomeHint=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!S.hintHome;
@@ -287,7 +287,7 @@ const navIcon=(ic,on)=>ic==='cart'
   :ic==='check'?`<img src="img/ref_stat_check.png" alt="" style="${on?'':'filter:grayscale(1);opacity:.55'}">`
   :`<img src="img/ref_nav_${ic}${on?'':'_off'}.png" alt="">`;
 function topbar(title){const ki=kinfo();return `<div class="top"><div class="ava"><img src="${ki.img}" alt=""></div>
-  <div class="hello">${title}<b>${ki.name}! 👋</b></div><button class="gear" data-act="switch" title="Сменить ребёнка">🔄</button></div>`}
+  <div class="hello">${title}<b>${ki.name}!</b></div><button class="gear" data-act="switch" title="Сменить ребёнка">${ico('sync-outline')}</button></div>`}
 
 function viewTasks(){
   const k=K(),ki=kinfo(),lvl=Math.floor(k.xp/200)+1,inLvl=k.xp%200;
@@ -299,7 +299,7 @@ function viewTasks(){
    <div class="sec"><h2>Мои задания</h2><span class="cnt">${done}/${tt.length}</span></div>`;
   if(!tt.length)h+='<div class="empty">На сегодня заданий нет.<br>Попроси родителя добавить их: кнопка «Родителям» внизу.</div>';
   av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3>${t.desc?`<div class="desc">${esc(t.desc)}</div>`:''}<div class="meta">${rew(t)}</div></div><button class="go" data-act="submit" data-id="${t.id}" aria-label="Готово">›</button></div>`);
-  wa.forEach(t=>h+=`<div class="task c2"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">Ждёт проверки родителя ⏳</div></div></div>`);
+  wa.forEach(t=>h+=`<div class="task c2"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${ico('hourglass-outline')} Ждёт проверки родителя</div></div></div>`);
   co.slice(-8).reverse().forEach(t=>h+=`<div class="task c3" style="opacity:.8"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div><img class="ok" src="img/ref_check_done.png" alt=""></div>`);
   return h+'<button class="btn full soft" data-act="toparent" style="margin-top:8px">Родителям</button>';
 }
@@ -311,7 +311,7 @@ function viewGoals(){
   act.forEach((g,i)=>{const p=goalProgress(k,g);
     h+=`<div class="task c${(i+1)%5}"><div class="tx"><h3>${esc(g.title)}</h3>
       <div class="bar"><i style="width:${Math.min(100,Math.round(100*p.done/g.target))}%"></i></div>
-      <div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span>${g.skill&&skillById(k,g.skill)?`<span>Навык: ${esc(skillById(k,g.skill).title)}</span>`:''}${p.reachedNow?'<span>🏆 Цель недели достигнута!</span>':''}</div>
+      <div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span>${g.skill&&skillById(k,g.skill)?`<span>Навык: ${esc(skillById(k,g.skill).title)}</span>`:''}${p.reachedNow?'<span>'+I.cup+' Цель недели достигнута!</span>':''}</div>
       ${p.weeks?`<div class="small">Недель с достигнутой целью: ${p.weeks}</div>`:''}</div></div>`});
   return h+'<p class="small" style="text-align:center">Если неделя не получилась, ничего не отнимается: в понедельник цель начинается заново.</p>';
 }
@@ -336,14 +336,14 @@ function goalForm(pre){
 
 function viewRewards(){
   const k=K(),av=avail(k),fz=k.purchases.filter(p=>p.status==='BOUGHT'||p.status==='POSTPONED').reduce((x,p)=>x+p.price,0);
-  let h=topbar('Мои награды,')+`<div class="hero" style="min-height:0"><div class="big">🪙 ${av}</div><div class="small" style="text-align:center">мой баланс${fz?' · ждёт выдачи: '+fz:''} · ⭐ ${k.xp} XP</div></div><div class="sec"><h2>Мои желания</h2></div>`;
+  let h=topbar('Мои награды,')+`<div class="hero" style="min-height:0"><div class="big">${I.coin} ${av}</div><div class="small" style="text-align:center">мой баланс${fz?' · ждёт выдачи: '+fz:''} · ${I.star} ${k.xp} XP</div></div><div class="sec"><h2>Мои желания</h2></div>`;
   if(!k.wishes.length)h+='<div class="empty">Желаний пока нет.<br>Родитель создаст их: «Главная» → «Родителям» → «Знакомство».</div>';
   k.wishes.forEach((w,i)=>{const op=openPurchase(k,w.id),can=!op&&av>=w.price;
-    h+=`<div class="task c${(i+3)%5}"><div class="tx"><h3>${esc(w.title)}</h3><div class="meta"><span>🪙 ${w.price}</span><span>~${days(w.price)} дн.</span></div>
+    h+=`<div class="task c${(i+3)%5}"><div class="tx"><h3>${esc(w.title)}</h3><div class="meta"><span>${I.coin} ${w.price}</span><span>~${days(w.price)} дн.</span></div>
     <div class="bar"><i style="width:${Math.min(100,100*av/w.price)}%"></i></div></div>
-    ${op?'<div class="small" style="font-weight:800">Ждёт выдачи ⏳</div>':`<button class="btn sm ${can?'green':'soft'}" ${can?'':'disabled'} data-act="buy" data-id="${w.id}">${can?'Хочу!':'ещё '+(w.price-av)}</button>`}</div>`});
+    ${op?'<div class="small" style="font-weight:800">'+ico('hourglass-outline')+' Ждёт выдачи</div>':`<button class="btn sm ${can?'green':'soft'}" ${can?'':'disabled'} data-act="buy" data-id="${w.id}">${can?'Хочу!':'ещё '+(w.price-av)}</button>`}</div>`});
   const dl=k.purchases.filter(p=>p.status==='DELIVERED');
-  if(dl.length){h+='<div class="sec"><h2>Уже получено</h2></div>';dl.slice(-8).reverse().forEach(p=>h+=`<div class="task c0"><div class="tx"><h3>🎉 ${esc(p.title)}</h3><div class="meta">🪙 ${p.price}</div></div></div>`)}
+  if(dl.length){h+='<div class="sec"><h2>Уже получено</h2></div>';dl.slice(-8).reverse().forEach(p=>h+=`<div class="task c0"><div class="tx"><h3>${ico('gift-outline')} ${esc(p.title)}</h3><div class="meta">${I.coin} ${p.price}</div></div></div>`)}
   return h;
 }
 
@@ -399,17 +399,17 @@ function viewParent(){
     <button class="go" style="background:#22C274;color:#fff" data-act="review" data-id="${t.id}" aria-label="Проверить">✓</button><button class="go" style="background:#F0486B;color:#fff" data-act="reject" data-id="${t.id}">✕</button></div>`);
   const pd=k.purchases.filter(p=>p.status==='BOUGHT'||p.status==='POSTPONED');
   if(pd.length){h+=`<div class="sec"><h2>Подарки к выдаче</h2><span class="cnt">${pd.length}</span></div>`;
-    pd.forEach(p=>h+=`<div class="task c4"><div class="tx"><h3>🎁 ${esc(p.title)}</h3><div class="meta">🪙 ${p.price}${p.status==='POSTPONED'?' · отложено':''}</div><div class="row" style="margin-top:8px"><button class="btn sm green" data-act="deliver" data-id="${p.id}">Выдано</button><button class="btn sm soft" data-act="postpone" data-id="${p.id}">Отложить</button><button class="btn sm red" data-act="cancelp" data-id="${p.id}">Отменить</button></div></div></div>`)}
+    pd.forEach(p=>h+=`<div class="task c4"><div class="tx"><h3>${ico('gift-outline')} ${esc(p.title)}</h3><div class="meta">${I.coin} ${p.price}${p.status==='POSTPONED'?' · отложено':''}</div><div class="row" style="margin-top:8px"><button class="btn sm green" data-act="deliver" data-id="${p.id}">Выдано</button><button class="btn sm soft" data-act="postpone" data-id="${p.id}">Отложить</button><button class="btn sm red" data-act="cancelp" data-id="${p.id}">Отменить</button></div></div></div>`)}
   h+=`<div class="sec"><h2>Все задания</h2></div><div class="row" style="margin-bottom:12px"><button class="btn sm" data-act="addtask">+ Своё</button><button class="btn sm soft" data-act="catalog">Из каталога</button></div>`;
-  av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div><button class="go" data-act="del" data-id="${t.id}">🗑</button></div>`);
+  av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div><button class="go" data-act="del" data-id="${t.id}">${ico('trash-outline')}</button></div>`);
   const tps=k.templates.filter(x=>x.active);
   if(tps.length){h+=`<div class="sec"><h2>Повторяются</h2><span class="cnt">${tps.length}</span></div>`;
-    tps.forEach(x=>h+=`<div class="task c3"><img class="ic" src="${iconFor(x.title)}" alt=""><div class="tx"><h3>${esc(x.title)}</h3><div class="meta"><span>${x.rec==='daily'?'каждый день':'по будням'}</span><span>🪙 ${x.coins}</span></div></div><button class="go" data-act="deltpl" data-id="${x.id}" aria-label="Остановить повтор">🗑</button></div>`)}
+    tps.forEach(x=>h+=`<div class="task c3"><img class="ic" src="${iconFor(x.title)}" alt=""><div class="tx"><h3>${esc(x.title)}</h3><div class="meta"><span>${x.rec==='daily'?'каждый день':'по будням'}</span><span>${I.coin} ${x.coins}</span></div></div><button class="go" data-act="deltpl" data-id="${x.id}" aria-label="Остановить повтор">${ico('trash-outline')}</button></div>`)}
   h+=parentSkillsBlock(k);
   h+='<div class="sec"><h2>Цели на неделю</h2></div><button class="btn sm soft" data-act="addgoal">+ Цель</button><div style="height:10px"></div>';
-  k.goals.filter(g=>g.status==='ACTIVE').forEach(g=>{const p=goalProgress(k,g);h+=`<div class="task c1"><div class="tx"><h3>${esc(g.title)}</h3><div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span></div></div><button class="go" data-act="delgoal" data-id="${g.id}" aria-label="Убрать цель">🗑</button></div>`});
+  k.goals.filter(g=>g.status==='ACTIVE').forEach(g=>{const p=goalProgress(k,g);h+=`<div class="task c1"><div class="tx"><h3>${esc(g.title)}</h3><div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span></div></div><button class="go" data-act="delgoal" data-id="${g.id}" aria-label="Убрать цель">${ico('trash-outline')}</button></div>`});
   h+='<div class="sec"><h2>Желания ребёнка</h2></div><button class="btn sm soft" data-act="addwish">+ Желание</button><div style="height:10px"></div>';
-  k.wishes.forEach(w=>h+=`<div class="task c4"><div class="tx"><h3>${esc(w.title)}</h3><div class="meta">🪙 ${w.price}</div></div><button class="go" data-act="delwish" data-id="${w.id}">🗑</button></div>`);
+  k.wishes.forEach(w=>h+=`<div class="task c4"><div class="tx"><h3>${esc(w.title)}</h3><div class="meta">${I.coin} ${w.price}</div></div><button class="go" data-act="delwish" data-id="${w.id}">${ico('trash-outline')}</button></div>`);
   h+='<div class="sec"><h2>Прочее</h2></div><div class="row"><button class="btn sm soft" data-act="sound">'+(S.sound===false?'Звук: выкл':'Звук: вкл')+'</button><button class="btn sm soft" data-act="lock">Выйти из кабинета</button><button class="btn sm red" data-act="reset">Сбросить всё</button></div>';
   return h;
 }
@@ -444,9 +444,9 @@ document.addEventListener('click',async e=>{
   else if(act==='toparent'){tab='parent';tabChanged=true}
   else if(act==='rnode'){return routeTaskDialog(id)}
   else if(act==='switch'){S.cur=null;unlocked=false;save()}
-  else if(act==='submit'){submit(id);toast('Отправлено родителю 👍')}
-  else if(act==='buy'){const k=K(),w=k.wishes.find(x=>x.id===id);if(w&&!openPurchase(k,w.id)&&avail(k)>=w.price){k.purchases.push({id:uid(),wishId:w.id,title:w.title,price:w.price,status:'BOUGHT'});save();toast('Попросили родителя 🎁')}}
-  else if(act==='deliver'||act==='postpone'||act==='cancelp'){const p=K().purchases.find(x=>x.id===id);if(p&&(p.status==='BOUGHT'||p.status==='POSTPONED')){p.status=act==='deliver'?'DELIVERED':act==='postpone'?'POSTPONED':'CANCELLED';save();toast(act==='deliver'?'Выдано 🎉':act==='cancelp'?'Монеты возвращены':'Отложено')}}
+  else if(act==='submit'){submit(id);toast('Отправлено родителю')}
+  else if(act==='buy'){const k=K(),w=k.wishes.find(x=>x.id===id);if(w&&!openPurchase(k,w.id)&&avail(k)>=w.price){k.purchases.push({id:uid(),wishId:w.id,title:w.title,price:w.price,status:'BOUGHT'});save();toast('Попросили родителя')}}
+  else if(act==='deliver'||act==='postpone'||act==='cancelp'){const p=K().purchases.find(x=>x.id===id);if(p&&(p.status==='BOUGHT'||p.status==='POSTPONED')){p.status=act==='deliver'?'DELIVERED':act==='postpone'?'POSTPONED':'CANCELLED';save();toast(act==='deliver'?'Выдано':act==='cancelp'?'Монеты возвращены':'Отложено')}}
   else if(act==='i_open'){introOpen=true}
   else if(act.startsWith('i_')){introAct(act,b)}
   else if(act==='newpin'){const p=pinVal();if(!/^\d{4,6}$/.test(p))return toast('PIN: 4–6 цифр');await setPin(p);unlocked=true;introOpen=!S.intro.done}
@@ -464,7 +464,7 @@ document.addEventListener('click',async e=>{
   else if(act==='lock'){unlocked=false;introOpen=false}
   else if(act==='addtask'){return taskForm({})}
   else if(act==='catalog'){
-    const m=modal('<h3>Каталог заданий</h3>'+CATALOG.map((c,i)=>`<div class="task c${i%5}"><img class="ic" src="${iconFor(c.t)}" alt=""><div class="tx"><h3>${esc(c.t)}</h3><div class="meta">🪙 ${c.c}</div></div><button class="go" data-pick="${i}">+</button></div>`).join(''));
+    const m=modal('<h3>Каталог заданий</h3>'+CATALOG.map((c,i)=>`<div class="task c${i%5}"><img class="ic" src="${iconFor(c.t)}" alt=""><div class="tx"><h3>${esc(c.t)}</h3><div class="meta">${I.coin} ${c.c}</div></div><button class="go" data-pick="${i}">+</button></div>`).join(''));
     m.addEventListener('click',ev=>{const p=ev.target.closest('[data-pick]');if(p){const c=CATALOG[+p.dataset.pick];m.remove();taskForm({t:c.t,d:c.d,c:c.c,x:10})}});return;
   }
   else if(act==='addwish'){

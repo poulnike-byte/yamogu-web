@@ -64,7 +64,7 @@ function reviewDialog(id){
     <button class="btn full soft" id="rv-back" style="margin-top:8px">Вернуть</button><button class="btn full soft" id="rv-no" style="margin-top:8px">Закрыть</button>`);
   m.addEventListener('click',ev=>{const b=ev.target.closest('[data-help]');if(!b)return;help=b.dataset.help;
     m.querySelectorAll('[data-help]').forEach(x=>x.classList.toggle('on',x===b));m.querySelector('#rv-ok').disabled=false});
-  m.querySelector('#rv-ok').onclick=()=>{if(!help)return;approve(id,help);m.remove();toast('Награда выдана ⭐');playSound('ok');celebrate();render()};
+  m.querySelector('#rv-ok').onclick=()=>{if(!help)return;approve(id,help);m.remove();toast('Награда выдана');playSound('ok');celebrate();render()};
   m.querySelector('#rv-back').onclick=()=>{reject(id);m.remove();render()};
   m.querySelector('#rv-no').onclick=()=>m.remove();
 }

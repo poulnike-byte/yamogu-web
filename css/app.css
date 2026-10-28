@@ -82,3 +82,10 @@ label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bot
 
 .wallet{display:flex;align-items:center;gap:6px;background:#fff;border-radius:999px;padding:6px 14px 6px 8px;font-weight:800;box-shadow:0 4px 12px rgba(19,32,107,.12)}.wallet img{height:26px}
 .routewrap{margin:4px -4px 8px}.route{display:block;overflow:visible}.rnode{cursor:pointer;outline:none}
+
+/* Иконки интерфейса (Ionicons, наши PNG наград) */
+.ico{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
+.meta span,.small .ico{display:inline-flex;align-items:center;gap:4px}
+.gear{color:var(--ink)}.gear .ico,.go .ico{width:22px;height:22px;vertical-align:middle}
+.big .ico{width:1em;height:1em;vertical-align:-.12em}
+.card .ico,.tx h3 .ico{vertical-align:-.18em}
