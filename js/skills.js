@@ -4,8 +4,8 @@
 const STAGES=['LEARNING','PRACTICING','INDEPENDENT','HABIT'];
 const STAGE_T={LEARNING:'Учусь',PRACTICING:'Пробую',INDEPENDENT:'Могу сам',HABIT:'Моя привычка'};
 const STAGE_CHILD={LEARNING:'Делаем вместе, шаг за шагом',PRACTICING:'Делаю сам, иногда нужно напоминание',INDEPENDENT:'Делаю без подсказок',HABIT:'Это уже моя привычка!'};
-const HELP=[['INDEPENDENT','Самостоятельно','#22C274'],['AFTER_REMINDER','После напоминания','#6AA6E8'],['SMALL_HELP','С небольшой помощью','#F0B44C'],['TOGETHER','Вместе со взрослым','#B38BE0']];
-const HELP_COLOR=h=>(HELP.find(x=>x[0]===h)||[0,0,'#C9CED9'])[2], HELP_NAME=h=>(HELP.find(x=>x[0]===h)||[0,'Не оценено'])[1];
+const HELP=[['INDEPENDENT','Самостоятельно','var(--green)'],['AFTER_REMINDER','После напоминания','var(--help-reminder)'],['SMALL_HELP','С небольшой помощью','var(--help-small)'],['TOGETHER','Вместе со взрослым','var(--help-together)']];
+const HELP_COLOR=h=>(HELP.find(x=>x[0]===h)||[0,0,'var(--help-unknown)'])[2], HELP_NAME=h=>(HELP.find(x=>x[0]===h)||[0,'Не оценено'])[1];
 const SKILL_PRESETS=['Самоорганизация','Порядок','Учёба','Забота о себе','Чтение','Здоровье'];
 const HABIT_DAYS=14,HABIT_ATTEMPTS=5;   // как HabitSuggestionConfig
 
@@ -32,7 +32,7 @@ function skillStats(k,s){
     moreDays:Math.max(0,HABIT_DAYS-days),moreAttempts:Math.max(0,HABIT_ATTEMPTS-assessed)};
 }
 const ladder=stage=>{const cur=STAGES.indexOf(stage);
-  return`<div role="img" aria-label="Ступень навыка: ${STAGE_T[stage]}" style="display:flex;gap:4px;margin-top:8px">${STAGES.map((s,i)=>`<div style="flex:1;text-align:center;font-size:12px;font-weight:800;padding:9px 2px;border-radius:12px;${i===cur?'background:#1F6BFF;color:#fff':i<cur?'background:#D8F2E6;color:#0F8F53':'background:#EEF2F8;color:#6A7488'}">${STAGE_T[s]}</div>`).join('')}</div>`};
+  return`<div role="img" aria-label="Ступень навыка: ${STAGE_T[stage]}" style="display:flex;gap:4px;margin-top:8px">${STAGES.map((s,i)=>`<div style="flex:1;text-align:center;font-size:12px;font-weight:800;padding:9px 2px;border-radius:12px;${i===cur?'background:var(--blue);color:var(--white)':i<cur?'background:var(--stage-done);color:var(--green-dark)':'background:var(--stage-off);color:var(--stage-off-ink)'}">${STAGE_T[s]}</div>`).join('')}</div>`};
 const helpDots=list=>list.length?`<div role="img" aria-label="Последние выполнения: ${list.map(HELP_NAME).join(', ')}" style="display:flex;gap:5px;margin-top:8px">${list.map(h=>`<i style="width:14px;height:14px;border-radius:50%;background:${HELP_COLOR(h)};display:block"></i>`).join('')}</div>`:'';
 
 // Карточка навыка для ребёнка («Прогресс»)
@@ -90,7 +90,7 @@ function celebrate(){
     if(typeof confetti!=='function')return;
     if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
     confetti({particleCount:70,spread:70,startVelocity:38,gravity:1.1,ticks:140,scalar:.9,origin:{y:.7},disableForReducedMotion:true,
-      colors:['#1F6BFF','#22C274','#FFC83D','#F0486B','#9CC4FF']});
+      colors:[COL.blue,COL.green,COL.gold,COL.red,COL.routeDash]});
   }catch(e){}
 }
 

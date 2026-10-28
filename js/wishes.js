@@ -38,7 +38,7 @@ function viewRewards(){
   shown.forEach((w,i)=>{const op=openPurchase(k,w.id),can=!op&&av>=w.price,isGoal=k.goal===w.id;
     h+=`<div class="task c${(i+3)%5}" style="flex-wrap:wrap"><div class="tx" style="min-width:60%"><h3>${esc(w.title)}</h3><div class="meta"><span>${I.coin} ${w.price}</span><span>~${days(w.price)} дн.</span></div>
     <div class="bar"><i style="width:${Math.min(100,100*av/w.price)}%"></i></div></div>
-    ${op?`<div class="small" style="font-weight:800;color:#0F8F53;flex-basis:100%">${op.status==='POSTPONED'&&op.note?'Куплено. Родитель отложил: '+esc(op.note):'Куплено. Ждём, когда родитель выдаст награду.'}</div>`
+    ${op?`<div class="small" style="font-weight:800;color:var(--green-dark);flex-basis:100%">${op.status==='POSTPONED'&&op.note?'Куплено. Родитель отложил: '+esc(op.note):'Куплено. Ждём, когда родитель выдаст награду.'}</div>`
       :can?`<button class="btn sm green" data-act="wishbuy" data-id="${w.id}">Хочу! За ${w.price}</button>`:`<div class="small" style="font-weight:800" aria-label="До «${esc(w.title)}» ещё ${coinsT(w.price-av)}">Ещё ${coinsT(w.price-av)}</div>`}
     <button class="btn sm ${isGoal?'':'soft'}" data-act="wishgoal" data-id="${w.id}" aria-label="${isGoal?'Это моя цель. Нажми, чтобы убрать':'Сделать «'+esc(w.title)+'» моей целью'}" style="flex-basis:100%">${isGoal?'★ Это моя цель':'Сделать целью'}</button></div>`});
   const dl=k.purchases.filter(p=>p.status==='DELIVERED');
@@ -68,7 +68,7 @@ function parentPendingBlock(k){
   let h=`<div class="sec"><h2>Ждёт меня</h2><span class="cnt">${pd.length}</span></div><p class="small" style="margin:0 4px 8px">Монеты за подарки списываются только после вашей выдачи или отмены.</p>`;
   pd.forEach(p=>{const d=waitDays(p);
     h+=`<div class="task c4"><div class="tx"><h3>${ico('gift-outline')} ${esc(p.title)}</h3><div class="meta"><span>${I.coin} ${p.price}</span>${p.status==='POSTPONED'?'<span>отложено'+(p.note?': '+esc(p.note):'')+'</span>':''}</div>
-    <div class="small" style="font-weight:800;${d>=OVERDUE_DAYS?'color:#B26A00':''}">Ждёт выдачи уже ${d} ${plural(d,'день','дня','дней')}</div>
+    <div class="small" style="font-weight:800;${d>=OVERDUE_DAYS?'color:var(--amber-text)':''}">Ждёт выдачи уже ${d} ${plural(d,'день','дня','дней')}</div>
     <div class="row" style="margin-top:8px"><button class="btn sm green" data-act="deliver" data-id="${p.id}">Выдано</button><button class="btn sm soft" data-act="postpone" data-id="${p.id}">Отложить с причиной</button><button class="btn sm red" data-act="cancelp" data-id="${p.id}">Отменить и вернуть монеты</button></div></div></div>`});
   return h;
 }

@@ -13,11 +13,11 @@ function applyNames(){KIDS.forEach(k=>{const n=S.kids[k.id]&&S.kids[k.id].name;k
 
 function onboardView(){
   const O=S.onb,st=O.step,kid=KIDS.find(k=>k.id===O.child);
-  const dots=`<div role="img" aria-label="Шаг ${st+1} из 3" style="display:flex;gap:8px;justify-content:center;margin:6px 0 14px">${[0,1,2].map(i=>`<i style="width:${i===st?28:10}px;height:10px;border-radius:5px;background:${i===st?'#1F6BFF':'#B9D4F5'};display:block"></i>`).join('')}</div>`;
+  const dots=`<div role="img" aria-label="Шаг ${st+1} из 3" style="display:flex;gap:8px;justify-content:center;margin:6px 0 14px">${[0,1,2].map(i=>`<i style="width:${i===st?28:10}px;height:10px;border-radius:5px;background:${i===st?'var(--blue)':'var(--dot-off)'};display:block"></i>`).join('')}</div>`;
   const back=st>0?'<button class="gear" data-act="ob_back" aria-label="Назад">‹</button>':'';
   if(st===0)return`<main class="welcome"><img class="logo" src="img/ref_logo.png" alt="ЯмогУ!"><p>Я учусь. Я пробую. Я могу!</p>
     <div style="position:relative;margin:10px auto;max-width:300px"><img src="${kid.img}" alt="${kid.name} приветствует тебя" style="width:170px;display:block;margin:0 auto 0 0">
-    <div style="position:absolute;right:0;top:14px;background:#fff;border-radius:22px;padding:12px 14px;font-weight:800;color:#13206B;font-size:17px;line-height:1.25;box-shadow:0 4px 12px rgba(19,32,107,.12)">Привет!<br>Я ${kid.name}!<br>Давай учиться<br>вместе!</div></div>
+    <div style="position:absolute;right:0;top:14px;background:var(--white);border-radius:22px;padding:12px 14px;font-weight:800;color:var(--ink);font-size:17px;line-height:1.25;box-shadow:0 4px 12px rgba(19,32,107,.12)">Привет!<br>Я ${kid.name}!<br>Давай учиться<br>вместе!</div></div>
     <button class="btn full" data-act="ob_next" style="max-width:340px;margin:12px auto 0">Начать</button></main>`;
   if(st===1){const ages=obAges(O.child);
     return`<main><div class="top">${back}<div class="hello"><b>Давай познакомимся!</b></div></div>${dots}

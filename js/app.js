@@ -285,7 +285,7 @@ function render(){
 }
 
 const navIcon=(ic,on)=>ic==='cart'
-  ?`<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" style="display:block;margin:0 auto 2px"><path fill="${on?'#1F6BFF':'#B4BAD3'}" d="M6.4,7.2H21.4L19.1,15.4H8.6Z"/>${on?'<path fill="#FFC83D" d="M8.4,9.2H19.2L18.3,12.4H9.3Z"/>':''}<path fill="none" stroke="${on?'#1F6BFF':'#8A92B8'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5,3.4H5.2L8.3,17.2H19.6"/><circle cx="10.5" cy="18.5" r="1.8" fill="${on?'#13206B':'#8A92B8'}"/><circle cx="18.5" cy="18.5" r="1.8" fill="${on?'#13206B':'#8A92B8'}"/></svg>`
+  ?`<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" style="display:block;margin:0 auto 2px"><path fill="${on?COL.blue:COL.iconOff2}" d="M6.4,7.2H21.4L19.1,15.4H8.6Z"/>${on?`<path fill="${COL.gold}" d="M8.4,9.2H19.2L18.3,12.4H9.3Z"/>`:''}<path fill="none" stroke="${on?COL.blue:COL.iconOff}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5,3.4H5.2L8.3,17.2H19.6"/><circle cx="10.5" cy="18.5" r="1.8" fill="${on?COL.ink:COL.iconOff}"/><circle cx="18.5" cy="18.5" r="1.8" fill="${on?COL.ink:COL.iconOff}"/></svg>`
   :ic==='check'?`<img src="img/ref_stat_check.png" alt="" style="${on?'':'filter:grayscale(1);opacity:.55'}">`
   :`<img src="img/ref_nav_${ic}${on?'':'_off'}.png" alt="">`;
 function topbar(title){const ki=kinfo();return `<div class="top"><div class="ava"><img src="${ki.img}" alt=""></div>
@@ -350,10 +350,10 @@ function progressData(k){
 }
 function viewProgress(){
   const k=K(),P=progressData(k),mx=Math.max(4,...P.week.map(d=>d.n));
-  const bar=(h,bg,today)=>`<div style="width:28px;height:${h}px;border-radius:10px;background:${bg};${today?'outline:2px solid #1F6BFF;':''}"></div>`;
-  const col={DONE:'linear-gradient(0deg,#2CC9B0,#4E9CFF)',WAITING:'#FFE7A1',NONE:'#E4EEFA',FUTURE:'#EEF3FA'};
+  const bar=(h,bg,today)=>`<div style="width:28px;height:${h}px;border-radius:10px;background:${bg};${today?'outline:2px solid var(--blue);':''}"></div>`;
+  const col={DONE:'linear-gradient(0deg,var(--teal),var(--blue-chart))',WAITING:'var(--waiting)',NONE:'var(--track)',FUTURE:'var(--track-future)'};
   const dsc={DONE:d=>'выполнено '+d.n,WAITING:()=>'ждёт проверки родителя',NONE:()=>'заданий не было',FUTURE:()=>'ещё впереди'};
-  const days=P.week.map((d,i)=>`<div role="img" aria-label="${DAYN[i]}${d.today?', сегодня':''}: ${dsc[d.state](d)}" style="flex:1;text-align:center"><div style="height:104px;display:flex;align-items:flex-end;justify-content:center">${bar(d.state==='DONE'?14+Math.round(90*Math.min(d.n,mx)/mx):14,col[d.state],d.today)}</div><div class="small" style="margin-top:6px;${d.today?'font-weight:800;color:#1F3A8A':''}">${DAYN[i]}</div></div>`).join('');
+  const days=P.week.map((d,i)=>`<div role="img" aria-label="${DAYN[i]}${d.today?', сегодня':''}: ${dsc[d.state](d)}" style="flex:1;text-align:center"><div style="height:104px;display:flex;align-items:flex-end;justify-content:center">${bar(d.state==='DONE'?14+Math.round(90*Math.min(d.n,mx)/mx):14,col[d.state],d.today)}</div><div class="small" style="margin-top:6px;${d.today?'font-weight:800;color:var(--blue-today)':''}">${DAYN[i]}</div></div>`).join('');
   const mw=Math.max(4,...P.lastWeeks),wn=['3 нед. назад','2 нед. назад','Прошлая','Эта'];
   const weeks=P.lastWeeks.map((n,i)=>`<div role="img" aria-label="${wn[i]}: ${n}" style="flex:1;text-align:center"><div style="height:70px;display:flex;align-items:flex-end;justify-content:center">${bar(10+Math.round(60*n/mw),n?col.DONE:col.NONE,i===3)}</div><div class="small" style="margin-top:4px;font-size:11px">${wn[i]}</div></div>`).join('');
   const cmp=P.thisWeek>P.prevWeek?'На этой неделе заданий подтверждено больше, чем на прошлой.':P.thisWeek===P.prevWeek&&P.thisWeek?'Столько же, сколько на прошлой неделе.':'';

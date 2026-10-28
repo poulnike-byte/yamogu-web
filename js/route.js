@@ -33,17 +33,17 @@ function viewRoute(){
   for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],my=(a.y+b.y)/2;d+=` C${a.x},${my} ${b.x},${my} ${b.x},${b.y}`}
   let svg=`<svg class="route" viewBox="0 0 ${ROUTE_W} ${H}" width="100%" role="img" aria-label="Карта маршрута: ${n} заданий">
     <path d="${d}" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="16" stroke-linecap="round"/>
-    <path d="${d}" fill="none" stroke="#9CC4FF" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"/>`;
-  nodes.forEach((x,i)=>{const p=pos(i),c={DONE:'#22C274',WAIT:'#FFB200',CUR:'#1F6BFF',OPEN:'#FFFFFF'}[x.state];
-    const mark=x.state==='DONE'?'<path d="M-12,0 L-4,8 L13,-9" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'
-      :x.state==='WAIT'?'<g transform="translate(-15,-15) scale(.0586)" color="#fff" fill="currentColor">'+ICO['hourglass-outline']+'</g>'
-      :`<text y="10" text-anchor="middle" font-size="26" font-weight="800" fill="${x.state==='CUR'?'#fff':'#13206B'}">${i+1}</text>`;
+    <path d="${d}" fill="none" stroke="${COL.routeDash}" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"/>`;
+  nodes.forEach((x,i)=>{const p=pos(i),c={DONE:COL.green,WAIT:COL.orange,CUR:COL.blue,OPEN:COL.white}[x.state];
+    const mark=x.state==='DONE'?`<path d="M-12,0 L-4,8 L13,-9" fill="none" stroke="${COL.white}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`
+      :x.state==='WAIT'?`<g transform="translate(-15,-15) scale(.0586)" color="${COL.white}" fill="currentColor">`+ICO['hourglass-outline']+'</g>'
+      :`<text y="10" text-anchor="middle" font-size="26" font-weight="800" fill="${x.state==='CUR'?COL.white:COL.ink}">${i+1}</text>`;
     svg+=`<g class="rnode${x.state==='CUR'?' cur':''}" data-act="rnode" data-id="${x.t.id}" transform="translate(${p.x},${p.y})" tabindex="0" role="button" aria-label="${esc(x.t.title)}">
-      ${x.state==='CUR'?'<circle r="40" fill="#1F6BFF" opacity=".18"/>':''}<circle r="32" fill="#0003" cy="4"/><circle r="32" fill="${c}" stroke="#fff" stroke-width="5"/>${mark}
-      <text x="${p.x>=280?34:p.x<=80?-34:0}" y="56" text-anchor="${p.x>=280?'end':p.x<=80?'start':'middle'}" font-size="13" font-weight="800" fill="#13206B" stroke="#fff" stroke-width="4" paint-order="stroke">${esc(x.t.title.length>22?x.t.title.slice(0,21)+'…':x.t.title)}</text></g>`});
+      ${x.state==='CUR'?`<circle r="40" fill="${COL.blue}" opacity=".18"/>`:''}<circle r="32" fill="#0003" cy="4"/><circle r="32" fill="${c}" stroke="${COL.white}" stroke-width="5"/>${mark}
+      <text x="${p.x>=280?34:p.x<=80?-34:0}" y="56" text-anchor="${p.x>=280?'end':p.x<=80?'start':'middle'}" font-size="13" font-weight="800" fill="${COL.ink}" stroke="${COL.white}" stroke-width="4" paint-order="stroke">${esc(x.t.title.length>22?x.t.title.slice(0,21)+'…':x.t.title)}</text></g>`});
   // вершина с флагом
-  svg+=`<g transform="translate(${sum.x},${sum.y})" opacity="${allDone?1:.55}"><circle r="36" fill="${allDone?'#FFD23A':'#E3E8F5'}" stroke="#fff" stroke-width="5"/>
-    <path d="M-8,18 V-20" stroke="#13206B" stroke-width="5" stroke-linecap="round"/><path d="M-8,-20 L18,-12 L-8,-4 Z" fill="#F0486B"/></g>`;
+  svg+=`<g transform="translate(${sum.x},${sum.y})" opacity="${allDone?1:.55}"><circle r="36" fill="${allDone?COL.goldFlag:COL.line}" stroke="${COL.white}" stroke-width="5"/>
+    <path d="M-8,18 V-20" stroke="${COL.ink}" stroke-width="5" stroke-linecap="round"/><path d="M-8,-20 L18,-12 L-8,-4 Z" fill="${COL.red}"/></g>`;
   // герой рядом с текущим узлом
   const ci=nodes.findIndex(x=>x.state==='CUR'); if(ci>=0){const p=pos(ci),side=p.x>180?-1:1;
     svg+=`<image href="${ki.img}" x="${side>0?p.x+40:p.x-96}" y="${p.y-56}" width="56" height="84" preserveAspectRatio="xMidYMid meet"/>`}
