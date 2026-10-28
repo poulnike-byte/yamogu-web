@@ -64,7 +64,7 @@ function reviewDialog(id){
     <button class="btn full soft" id="rv-back" style="margin-top:8px">Вернуть</button><button class="btn full soft" id="rv-no" style="margin-top:8px">Закрыть</button>`);
   m.addEventListener('click',ev=>{const b=ev.target.closest('[data-help]');if(!b)return;help=b.dataset.help;
     m.querySelectorAll('[data-help]').forEach(x=>x.classList.toggle('on',x===b));m.querySelector('#rv-ok').disabled=false});
-  m.querySelector('#rv-ok').onclick=()=>{if(!help)return;approve(id,help);m.remove();toast('Награда выдана ⭐');render()};
+  m.querySelector('#rv-ok').onclick=()=>{if(!help)return;approve(id,help);m.remove();toast('Награда выдана ⭐');celebrate();render()};
   m.querySelector('#rv-back').onclick=()=>{reject(id);m.remove();render()};
   m.querySelector('#rv-no').onclick=()=>m.remove();
 }
@@ -81,4 +81,15 @@ function resolveSkill(m,k,idAttr){
   if(v[0]!=='+')return{id:v};
   const r=addSkill(k,v==='+new'?m.querySelector('#'+idAttr+'-new').value:v.slice(1));
   return typeof r==='string'?{err:r}:{id:r.id};
+}
+
+// Короткое мягкое конфетти при подтверждении задания (canvas-confetti, лицензия ISC). Один выстрел, без звука;
+// при системной настройке «уменьшить движение» и если библиотека не загрузилась — ничего не показывает.
+function celebrate(){
+  try{
+    if(typeof confetti!=='function')return;
+    if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    confetti({particleCount:70,spread:70,startVelocity:38,gravity:1.1,ticks:140,scalar:.9,origin:{y:.7},disableForReducedMotion:true,
+      colors:['#1F6BFF','#22C274','#FFC83D','#F0486B','#9CC4FF']});
+  }catch(e){}
 }
