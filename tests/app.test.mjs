@@ -42,7 +42,8 @@ async function session(fn) {
   try { await fn(api); } finally { await cur.ctx.close().catch(() => {}); fs.rmSync(dir, { recursive: true, force: true }); }
 }
 // После перезапуска выбранный ребёнок сохраняется — тогда экран выбора не показывается
-const asKirill = async p => { await p.waitForSelector('nav,[data-act=who]'); if (await p.isVisible('[data-act=who][data-id=kirill]')) await p.click('[data-act=who][data-id=kirill]'); await p.waitForSelector('nav'); };
+const asKirill = async p => { await p.waitForFunction(() => S.onb); await p.evaluate(() => { if (!S.onb.done) { S.onb.done = true; save(); render(); } });   // онбординг проверяется отдельным тестом
+  await p.waitForSelector('nav,[data-act=who]'); if (await p.isVisible('[data-act=who][data-id=kirill]')) await p.click('[data-act=who][data-id=kirill]'); await p.waitForSelector('nav'); };
 const toParent = async (p, pin) => {
   await p.click('[data-tab=home]'); await p.click('[data-act=toparent]');
   await p.fill('#pin', pin); await p.click('[data-act=newpin],[data-act=unlock]');
@@ -187,4 +188,39 @@ test('Желания: покупка с подтверждением, цель, 
   // скрыть желание: ребёнок не видит, цель снимается
   await p.click('[data-act=hidewish] >> nth=1');
   assert.deepEqual(await p.evaluate(() => [K().wishes[1].hidden, K().goal]), [true, null]);
+}));
+
+test('Онбординг: приветствие, знакомство, три навыка; повторно не показывается', async () => session(async s => {
+  let p = s.page; await p.waitForFunction(() => S.onb);
+  assert.ok(await p.isVisible('text=Давай учиться'), 'на чистом устройстве показывается приветствие');
+  await p.click('[data-act=ob_next]');                                   // «Начать»
+  assert.ok(await p.isVisible('text=Давай познакомимся!'));
+  await p.click('[data-act=ob_child][data-id=vika]');
+  assert.equal(await p.locator('[data-act=ob_age]').count(), 4, 'у Вики возраст 6–9');
+  await p.click('[data-act=ob_child][data-id=kirill]');
+  assert.equal(await p.locator('[data-act=ob_age]').count(), 3, 'у Кирилла возраст 10–12');
+  await p.click('[data-act=ob_child][data-id=vika]'); await p.click('[data-act=ob_age][data-id="8"]');
+  await p.fill('#ob-name', 'Маша'); await p.click('[data-act=ob_next]');
+  assert.ok(await p.isVisible('text=Выбери первые навыки'));
+  assert.ok(await p.isDisabled('[data-act=ob_next]'), 'без трёх навыков дальше нельзя');
+  for (const t of ['Утренние дела', 'Делать уроки', 'Заниматься спортом']) await p.click(`[data-act=ob_skill][data-id="${t}"]`);
+  await p.click('[data-act=ob_skill][data-id="Планировать день"]');
+  assert.equal(await p.evaluate(() => S.onb.skills.length), 3, 'четвёртый навык не выбирается');
+  await p.click('[data-act=ob_next]');
+  assert.deepEqual(await p.evaluate(() => [S.cur, S.kids.vika.name, S.kids.vika.age, S.interests.length, S.onb.done]), ['vika', 'Маша', 8, 3, true]);
+  assert.ok(await p.isVisible('text=Маша!'), 'имя из знакомства в приветствии');
+  await s.reopen(); p = s.page; await p.waitForSelector('nav'); await p.click('[data-tab=home]');
+  assert.ok(await p.isVisible('text=Маша!'), 'после перезапуска онбординга нет, имя сохранилось');
+  // навыки из онбординга предлагаются при создании задания
+  await p.click('[data-tab=home]'); await p.click('[data-act=toparent]'); await p.fill('#pin', '2468'); await p.click('[data-act=newpin]'); await exitIntro(p);
+  await p.click('[data-act=addtask]');
+  assert.ok((await p.locator('#f-s option').allTextContents()).includes('+ Утренние дела'));
+}));
+
+test('Онбординг не прерывает тех, у кого уже есть данные', async () => session(async s => {
+  const p = s.page; await p.waitForFunction(() => S.onb);
+  const r = await p.evaluate(() => { const o = { kids: { kirill: blank(), vika: blank() }, cur: null, pin: null }; o.kids.kirill.coins = 5; const a = normalize(o).onb.done;
+    const b = normalize({ kids: { kirill: blank(), vika: blank() }, cur: null, pin: null }).onb.done;
+    const c = normalize({ kids: { kirill: blank(), vika: blank() }, cur: null, pin: { salt: 'x', hash: 'y' } }).onb.done; return [a, b, c]; });
+  assert.deepEqual(r, [true, false, true], 'монеты или PIN = уже пользовались; пусто = нужен онбординг');
 }));

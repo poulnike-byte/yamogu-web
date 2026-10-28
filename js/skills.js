@@ -71,7 +71,7 @@ function reviewDialog(id){
 // Выбор навыка в формах: «Без навыка», навыки ребёнка, готовые «+ …», «+ Новый навык…» (создаётся при сохранении)
 function skillSelect(k,idAttr,withNone=true,noneLabel='Без навыка'){
   const have=new Set(activeSkills(k).map(s=>s.title.toLowerCase()));
-  return`<select id="${idAttr}">${withNone?`<option value="">${noneLabel}</option>`:''}${activeSkills(k).map(s=>`<option value="${s.id}">${esc(s.title)}</option>`).join('')}${SKILL_PRESETS.filter(p=>!have.has(p.toLowerCase())).map(p=>`<option value="+${esc(p)}">+ ${esc(p)}</option>`).join('')}<option value="+new">+ Новый навык…</option></select>
+  return`<select id="${idAttr}">${withNone?`<option value="">${noneLabel}</option>`:''}${activeSkills(k).map(s=>`<option value="${s.id}">${esc(s.title)}</option>`).join('')}${[...new Set([...(S.interests||[]),...SKILL_PRESETS])].filter(p=>!have.has(p.toLowerCase())).map(p=>`<option value="+${esc(p)}">+ ${esc(p)}</option>`).join('')}<option value="+new">+ Новый навык…</option></select>
    <input id="${idAttr}-new" placeholder="Название нового навыка" maxlength="60" style="display:none;margin-top:6px">`;
 }
 function bindSkillSelect(m,idAttr){const sel=m.querySelector('#'+idAttr),inp=m.querySelector('#'+idAttr+'-new');sel.onchange=()=>{inp.style.display=sel.value==='+new'?'block':'none'}}

@@ -58,6 +58,7 @@ function normalize(s){
   s.intro=s.intro||freshIntro();
   for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];k.templates=k.templates||[];k.skills=k.skills||[];k.rets=k.rets||[];
     (k.spent||[]).forEach(p=>k.purchases.push({id:uid(),wishId:'',title:p.title,price:p.price,status:'DELIVERED'}));delete k.spent}
+  s.onb=s.onb||freshOnb(s);   // первый запуск: онбординг ребёнка, если данных на устройстве ещё нет
   return s;
 }
 function load(){
@@ -268,7 +269,8 @@ let tabChanged=false,routeFocus=true;   // при входе на «Маршру
 const needHomeHint=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!S.hintHome;
 const homeHint=()=>needHomeHint()?'<div class="card"><b>Чтобы данные не пропали</b><p class="muted" style="margin:4px 0 10px">Нажмите «Поделиться» → «На экран Домой» и открывайте ЯмогУ! со значка.</p><button class="btn sm soft" data-act="hidehint">Понятно</button></div>':'';
 function render(){
-  ensureOcc();
+  ensureOcc();applyNames();
+  if(!S.onb.done){$app.innerHTML=onboardView();return}
   if(!S.cur){
     $app.innerHTML=`<main class="welcome"><img class="logo" src="img/ref_logo.png" alt="ЯмогУ!"><p>Я учусь. Я пробую. Я могу!</p>
     <h2>Кто сегодня играет?</h2>${homeHint()}<div class="pick">${KIDS.map(k=>`<button class="${k.cls}" data-act="who" data-id="${k.id}"><img src="${k.img}" alt="">${k.name}</button>`).join('')}</div></main>`;
@@ -437,6 +439,7 @@ document.addEventListener('click',async e=>{
   else if(act==='cancelp'){return cancelForm(id)}
   else if(act==='editwish'){return wishForm(K().wishes.find(x=>x.id===id))}
   else if(act==='hidewish'){const w=K().wishes.find(x=>x.id===id);if(w)setWishHidden(K(),id,!w.hidden)}
+  else if(act.startsWith('ob_')){onboardAct(act,b)}
   else if(act==='i_open'){introOpen=true}
   else if(act.startsWith('i_')){introAct(act,b)}
   else if(act==='newpin'){const p=pinVal();if(!/^\d{4,6}$/.test(p))return toast('PIN: 4–6 цифр');await setPin(p);unlocked=true;introOpen=!S.intro.done}
