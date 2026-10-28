@@ -371,36 +371,6 @@ function viewProgress(){
    </div>`;
 }
 
-function viewParent(){
-  if(!unlocked){
-    return `<div class="top"><div class="hello"><b>Кабинет родителя</b></div></div><div class="card"><p style="margin-top:0">${S.pin?'Введите PIN, чтобы продолжить.':'Придумайте PIN из 4–6 цифр. Он защитит проверку заданий и кабинет родителя.'}</p>
-    <input id="pin" class="pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off">
-    <button class="btn full" data-act="${S.pin?'unlock':'newpin'}">${S.pin?'Войти':'Установить PIN'}</button>${S.pin?'<button class="btn sm soft" data-act="forgot" style="margin-top:12px">Забыли PIN?</button>':''}</div>`;
-  }
-  if(introOpen)return introView();
-  const k=K(),wa=k.tasks.filter(t=>t.status==='WAITING_APPROVAL'),av=todays(k).filter(t=>t.status==='AVAILABLE');
-  let h=`<div class="top"><div class="hello"><b>Кабинет родителя</b></div></div>
-  <div class="kids">${KIDS.map(x=>`<button class="kid ${x.id===S.cur?'on':''}" data-act="who" data-id="${x.id}" data-stay="1"><img src="${x.img}" alt="">${x.name}</button>`).join('')}</div>
-  <button class="btn sm soft" data-act="i_open" style="margin-bottom:12px">${S.intro.done?'Знакомство: пройти заново':'Знакомство с семьёй'}</button>
-  <div class="sec"><h2>Ожидают проверки</h2><span class="cnt">${wa.length}</span></div>`;
-  if(!wa.length)h+='<div class="empty">Нечего проверять</div>';
-  wa.forEach(t=>h+=`<div class="task c1"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div>
-    <button class="go" style="background:#22C274;color:#fff" data-act="review" data-id="${t.id}" aria-label="Проверить">✓</button><button class="go" style="background:#F0486B;color:#fff" data-act="reject" data-id="${t.id}">✕</button></div>`);
-  h+=parentPendingBlock(k);
-  h+=`<div class="sec"><h2>Все задания</h2></div><div class="row" style="margin-bottom:12px"><button class="btn sm" data-act="addtask">+ Своё</button><button class="btn sm soft" data-act="catalog">Из каталога</button></div>`;
-  av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div><button class="go" data-act="del" data-id="${t.id}">${ico('trash-outline')}</button></div>`);
-  const tps=k.templates.filter(x=>x.active);
-  if(tps.length){h+=`<div class="sec"><h2>Повторяются</h2><span class="cnt">${tps.length}</span></div>`;
-    tps.forEach(x=>h+=`<div class="task c3"><img class="ic" src="${iconFor(x.title)}" alt=""><div class="tx"><h3>${esc(x.title)}</h3><div class="meta"><span>${x.rec==='daily'?'каждый день':'по будням'}</span><span>${I.coin} ${x.coins}</span></div></div><button class="go" data-act="deltpl" data-id="${x.id}" aria-label="Остановить повтор">${ico('trash-outline')}</button></div>`)}
-  h+=reportBlock(k);
-  h+=parentSkillsBlock(k);
-  h+='<div class="sec"><h2>Цели на неделю</h2></div><button class="btn sm soft" data-act="addgoal">+ Цель</button><div style="height:10px"></div>';
-  k.goals.filter(g=>g.status==='ACTIVE').forEach(g=>{const p=goalProgress(k,g);h+=`<div class="task c1"><div class="tx"><h3>${esc(g.title)}</h3><div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span></div></div><button class="go" data-act="delgoal" data-id="${g.id}" aria-label="Убрать цель">${ico('trash-outline')}</button></div>`});
-  h+=parentWishesBlock(k);
-  h+='<div class="sec"><h2>Прочее</h2></div><div class="row"><button class="btn sm soft" data-act="sound">'+(S.sound===false?'Звук: выкл':'Звук: вкл')+'</button><button class="btn sm soft" data-act="lock">Выйти из кабинета</button><button class="btn sm red" data-act="reset">Сбросить всё</button></div>';
-  return h;
-}
-
 function taskForm(pre){
   const m=modal(`<h3>Новое задание для ${kinfo().name}</h3><label>Название</label><input id="f-t" value="${esc(pre.t||'')}">
    <label>Описание / шаги</label><textarea id="f-d" rows="3">${esc(pre.d||'')}</textarea>
@@ -423,12 +393,12 @@ function taskForm(pre){
 
 document.addEventListener('click',async e=>{
   const tb=e.target.closest('[data-tab]');
-  if(tb){tab=tb.dataset.tab;tabChanged=true;routeFocus=true;if(tab!=='parent'){unlocked=false;introOpen=false}return render()}
+  if(tb){tab=tb.dataset.tab;tabChanged=true;routeFocus=true;if(tab!=='parent'){unlocked=false;introOpen=false}parentPage='hub';return render()}
   const b=e.target.closest('[data-act]');if(!b)return;
   const id=b.dataset.id,act=b.dataset.act,pinVal=()=>(document.getElementById('pin')||{}).value||'';
   if(act==='hidehint'){S.hintHome=1;save()}
   else if(act==='who'){S.cur=id;save();if(!b.dataset.stay){tab='route';unlocked=false}}
-  else if(act==='toparent'){tab='parent';tabChanged=true}
+  else if(act==='toparent'){tab='parent';tabChanged=true;parentPage='hub'}
   else if(act==='rnode'){return routeTaskDialog(id)}
   else if(act==='switch'){S.cur=null;unlocked=false;save()}
   else if(act==='submit'){submit(id);toast('Отправлено родителю')}
@@ -442,8 +412,8 @@ document.addEventListener('click',async e=>{
   else if(act.startsWith('ob_')){onboardAct(act,b)}
   else if(act==='i_open'){introOpen=true}
   else if(act.startsWith('i_')){introAct(act,b)}
-  else if(act==='newpin'){const p=pinVal();if(!/^\d{4,6}$/.test(p))return toast('PIN: 4–6 цифр');await setPin(p);unlocked=true;introOpen=!S.intro.done}
-  else if(act==='unlock'){if(await checkPin(pinVal())){unlocked=true;introOpen=!S.intro.done}else return toast('Неверный PIN')}
+  else if(act==='newpin'){const p=pinVal();if(!/^\d{4,6}$/.test(p))return toast('PIN: 4–6 цифр');await setPin(p);unlocked=true;parentPage='hub';introOpen=!S.intro.done}
+  else if(act==='unlock'){if(await checkPin(pinVal())){unlocked=true;parentPage='hub';introOpen=!S.intro.done}else return toast('Неверный PIN')}
   else if(act==='range'){reportRange=id==='4w'?'4w':'week'}
   else if(act==='review'){return reviewDialog(id)}
   else if(act==='stage'){moveStage(K(),id,Number(b.dataset.dir))}
@@ -455,7 +425,11 @@ document.addEventListener('click',async e=>{
   else if(act==='delgoal'){const g=K().goals.find(x=>x.id===id);if(g){g.status='ARCHIVED';save();toast('Цель убрана')}}   // архив: история недель сохраняется
   else if(act==='delwish'){const k=K();k.wishes=k.wishes.filter(x=>x.id!==id);if(k.goal===id)k.goal=null;save()}
   else if(act==='sound'){S.sound=S.sound===false;save()}   // родитель включает и выключает звук наград
-  else if(act==='lock'){unlocked=false;introOpen=false}
+  else if(act==='pp'){parentPage=id;tabChanged=true}
+  else if(act==='editkid'){return kidForm()}
+  else if(act==='chpin'){return pinForm()}
+  else if(act==='help'){return helpDialog()}
+  else if(act==='lock'){unlocked=false;introOpen=false;parentPage='hub'}
   else if(act==='addtask'){return taskForm({})}
   else if(act==='catalog'){
     const m=modal('<h3>Каталог заданий</h3>'+CATALOG.map((c,i)=>`<div class="task c${i%5}"><img class="ic" src="${iconFor(c.t)}" alt=""><div class="tx"><h3>${esc(c.t)}</h3><div class="meta">${I.coin} ${c.c}</div></div><button class="go" data-pick="${i}">+</button></div>`).join(''));
