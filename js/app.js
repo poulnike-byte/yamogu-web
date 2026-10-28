@@ -77,7 +77,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const K=()=>S.kids[S.cur], kinfo=()=>KIDS.find(k=>k.id===S.cur);
 
 // ---- Правила (как TaskRepositoryRules.kt) ----
-function submit(id){const t=K().tasks.find(x=>x.id===id&&x.status==='AVAILABLE');if(t){t.status='WAITING_APPROVAL';save()}}
+function submit(id){const t=K().tasks.find(x=>x.id===id&&x.status==='AVAILABLE');if(t){t.status='WAITING_APPROVAL';t.sub=dayStr();save()}}
 function reject(id){const t=K().tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(t){t.status='AVAILABLE';save()}}
 function approve(id){const k=K(),t=k.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(!t)return; // награда ровно один раз
   t.status='COMPLETED';k.xp+=t.xp;k.coins+=t.coins;k.log.push({day:dayStr(),title:t.title});save()}
@@ -344,15 +344,38 @@ function viewRewards(){
   return h;
 }
 
+const plural=(n,a,b,c)=>{const m=n%100,d=n%10;return m>10&&m<15?c:d===1?a:d>1&&d<5?b:c};
+const DAYN=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+// Данные для «Прогресса» (как ProgressReader в Android): неделя по дням, эта и прошлая неделя, последние 4 недели, достижения
+function progressData(k){
+  const today=dayStr(),mon=mondayOf(today);
+  const week=DAYN.map((_,i)=>{const date=addDays(mon,i),n=k.log.filter(e=>e.day===date).length,wait=k.tasks.some(t=>t.status==='WAITING_APPROVAL'&&t.sub===date);
+    return{date,n,today:date===today,state:date>today?'FUTURE':n>0?'DONE':wait?'WAITING':'NONE'}});
+  const inR=(a,b)=>k.log.filter(e=>e.day>=a&&e.day<=b).length;
+  const lastWeeks=[3,2,1,0].map(w=>{const to=addDays(today,-7*w);return inR(addDays(to,-6),to)});
+  const reachedWeeks=k.goals.reduce((a,g)=>a+goalProgress(k,g).weeks,0);
+  return{week,thisWeek:inR(mon,addDays(mon,6)),prevWeek:inR(addDays(mon,-7),addDays(mon,-1)),lastWeeks,achievements:reachedWeeks+(k.log.length?1:0)};
+}
 function viewProgress(){
-  const k=K(),done=k.tasks.filter(t=>t.status==='COMPLETED').length,total=k.tasks.length,pct=total?Math.round(100*done/total):0;
-  return topbar('Мой прогресс,')+`<div class="card"><h2>Выполнено заданий</h2><div class="big">${pct}%</div><div class="bar"><i style="width:${pct}%"></i></div><div class="small" style="text-align:center">${done} из ${total}</div></div>
-  <div class="grid">
-   <div class="card c2" style="text-align:center"><img src="img/ref_stat_star.png" height="56" alt=""><div class="big" style="font-size:30px">${k.xp}</div><div class="small">опыта</div></div>
-   <div class="card c0" style="text-align:center"><img src="img/skill_money.png" height="56" alt=""><div class="big" style="font-size:30px">${k.coins}</div><div class="small">монет</div></div>
-   <div class="card c3" style="text-align:center"><img src="img/ref_stat_check.png" height="56" alt=""><div class="big" style="font-size:30px">${done}</div><div class="small">выполнено</div></div>
-   <div class="card c4" style="text-align:center"><img src="img/ref_stat_cup.png" height="56" alt=""><div class="big" style="font-size:30px">${k.purchases.filter(p=>p.status==='DELIVERED').length}</div><div class="small">наград получено</div></div>
-  </div>`;
+  const k=K(),P=progressData(k),mx=Math.max(4,...P.week.map(d=>d.n));
+  const bar=(h,bg,today)=>`<div style="width:28px;height:${h}px;border-radius:10px;background:${bg};${today?'outline:2px solid #1F6BFF;':''}"></div>`;
+  const col={DONE:'linear-gradient(0deg,#2CC9B0,#4E9CFF)',WAITING:'#FFE7A1',NONE:'#E4EEFA',FUTURE:'#EEF3FA'};
+  const dsc={DONE:d=>'выполнено '+d.n,WAITING:()=>'ждёт проверки родителя',NONE:()=>'заданий не было',FUTURE:()=>'ещё впереди'};
+  const days=P.week.map((d,i)=>`<div role="img" aria-label="${DAYN[i]}${d.today?', сегодня':''}: ${dsc[d.state](d)}" style="flex:1;text-align:center"><div style="height:104px;display:flex;align-items:flex-end;justify-content:center">${bar(d.state==='DONE'?14+Math.round(90*Math.min(d.n,mx)/mx):14,col[d.state],d.today)}</div><div class="small" style="margin-top:6px;${d.today?'font-weight:800;color:#1F3A8A':''}">${DAYN[i]}</div></div>`).join('');
+  const mw=Math.max(4,...P.lastWeeks),wn=['3 нед. назад','2 нед. назад','Прошлая','Эта'];
+  const weeks=P.lastWeeks.map((n,i)=>`<div role="img" aria-label="${wn[i]}: ${n}" style="flex:1;text-align:center"><div style="height:70px;display:flex;align-items:flex-end;justify-content:center">${bar(10+Math.round(60*n/mw),n?col.DONE:col.NONE,i===3)}</div><div class="small" style="margin-top:4px;font-size:11px">${wn[i]}</div></div>`).join('');
+  const cmp=P.thisWeek>P.prevWeek?'На этой неделе заданий подтверждено больше, чем на прошлой.':P.thisWeek===P.prevWeek&&P.thisWeek?'Столько же, сколько на прошлой неделе.':'';
+  return topbar('Мой прогресс,')+`<div class="card"><h2>Моя неделя</h2><div style="display:flex;gap:4px;margin-top:8px">${days}</div>
+    <div class="small" style="text-align:center;margin-top:10px">Подтверждено на этой неделе: <b>${P.thisWeek}</b> · на прошлой: ${P.prevWeek}</div>${cmp?`<div class="small" style="text-align:center">${cmp}</div>`:''}
+    <div class="small" style="text-align:center;margin-top:6px">Дни без заданий — не беда: ничего не отнимается.</div></div>
+   <div class="card"><h2>Последние 4 недели</h2><div style="display:flex;gap:4px;margin-top:8px">${weeks}</div></div>
+   <div class="card c4"><div class="row" style="align-items:center;flex-wrap:nowrap"><img src="img/ref_stat_cup.png" height="44" alt=""><div style="flex:1"><b>${P.achievements} ${plural(P.achievements,'достижение','достижения','достижений')}</b><div class="small">Достижение — достигнутая цель за неделю и первое подтверждённое задание.</div></div></div></div>
+   <div class="grid">
+    <div class="card c2" style="text-align:center"><img src="img/ref_stat_star.png" height="56" alt=""><div class="big" style="font-size:30px">${k.xp}</div><div class="small">опыта</div></div>
+    <div class="card c0" style="text-align:center"><img src="img/skill_money.png" height="56" alt=""><div class="big" style="font-size:30px">${k.coins}</div><div class="small">монет</div></div>
+    <div class="card c3" style="text-align:center"><img src="img/ref_stat_check.png" height="56" alt=""><div class="big" style="font-size:30px">${k.log.length}</div><div class="small">подтверждено</div></div>
+    <div class="card c4" style="text-align:center"><img src="img/ref_stat_cup.png" height="56" alt=""><div class="big" style="font-size:30px">${k.purchases.filter(p=>p.status==='DELIVERED').length}</div><div class="small">наград получено</div></div>
+   </div>`;
 }
 
 function viewParent(){
