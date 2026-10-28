@@ -26,7 +26,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{color:var(--ink);font:16px/1.35 -apple-system,"SF Pro Rounded",system-ui,"Segoe UI",Arial,sans-serif;
-  background:var(--sky-bg) url(img/ref_bg_today.jpg) center top/cover fixed no-repeat;-webkit-user-select:none;user-select:none;
+  background:var(--sky-bg) url(../img/ref_bg_today.jpg) center top/cover fixed no-repeat;-webkit-user-select:none;user-select:none;
   overscroll-behavior:none}
 #app{max-width:520px;margin:0 auto;min-height:100%;padding-top:env(safe-area-inset-top)}
 main{padding:10px 16px calc(110px + env(safe-area-inset-bottom))}
