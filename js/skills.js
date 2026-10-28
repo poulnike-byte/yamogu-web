@@ -64,7 +64,7 @@ function reviewDialog(id){
     <button class="btn full soft" id="rv-back" style="margin-top:8px">Вернуть</button><button class="btn full soft" id="rv-no" style="margin-top:8px">Закрыть</button>`);
   m.addEventListener('click',ev=>{const b=ev.target.closest('[data-help]');if(!b)return;help=b.dataset.help;
     m.querySelectorAll('[data-help]').forEach(x=>x.classList.toggle('on',x===b));m.querySelector('#rv-ok').disabled=false});
-  m.querySelector('#rv-ok').onclick=()=>{if(!help)return;approve(id,help);m.remove();toast('Награда выдана ⭐');celebrate();render()};
+  m.querySelector('#rv-ok').onclick=()=>{if(!help)return;approve(id,help);m.remove();toast('Награда выдана ⭐');playSound('ok');celebrate();render()};
   m.querySelector('#rv-back').onclick=()=>{reject(id);m.remove();render()};
   m.querySelector('#rv-no').onclick=()=>m.remove();
 }
@@ -91,5 +91,15 @@ function celebrate(){
     if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
     confetti({particleCount:70,spread:70,startVelocity:38,gravity:1.1,ticks:140,scalar:.9,origin:{y:.7},disableForReducedMotion:true,
       colors:['#1F6BFF','#22C274','#FFC83D','#F0486B','#9CC4FF']});
+  }catch(e){}
+}
+
+// Звук (howler.js, MIT). Играет только после нажатия «Подтвердить» (так разрешают браузеры и iPhone), без автозапуска;
+// родитель выключает его в кабинете: «Звук: вкл/выкл». Файл sounds/ok.wav — собственный короткий перезвон проекта.
+const _snd={};
+function playSound(name){
+  try{
+    if(S.sound===false||typeof Howl!=='function')return;
+    (_snd[name]=_snd[name]||new Howl({src:['sounds/'+name+'.wav'],volume:.55})).play();
   }catch(e){}
 }

@@ -112,3 +112,19 @@ test('Прогресс: неделя по дням, навыки, достиже
   for (const t of ['Моя неделя', 'Последние 4 недели', 'Мои навыки', 'достижение']) assert.ok(await p.isVisible(`text=${t}`), t);
   assert.equal(await p.locator('[role=img][aria-label*="сегодня"]').count(), 1);
 }));
+
+test('Звук: играет при подтверждении, родитель может выключить, файл доступен', async () => session(async s => {
+  let p = s.page; await asKirill(p);
+  const wav = await p.evaluate(async () => { const r = await fetch('sounds/ok.wav'); return [r.status, (await r.arrayBuffer()).byteLength]; });
+  assert.equal(wav[0], 200); assert.ok(wav[1] > 50000, 'файл звука не пустой');
+  assert.equal(await p.evaluate(() => typeof Howl), 'function');
+  await p.evaluate(() => { window.__plays = 0; Howl.prototype.play = function () { window.__plays++; return 0; }; });   // слышать звук тест не может — считаем вызовы
+  const approveOne = async id => {
+    await p.evaluate(i => { K().tasks.push({ id: i, title: i, desc: '', coins: 1, xp: 1, status: 'AVAILABLE' }); submit(i); tab = 'parent'; unlocked = true; render(); }, id);
+    await p.click(`[data-act=review][data-id=${id}]`); await p.click('[data-help=INDEPENDENT]'); await p.click('#rv-ok');
+  };
+  await approveOne('a1'); assert.equal(await p.evaluate(() => window.__plays), 1, 'при подтверждении звук играет');
+  await p.evaluate(() => { tab = 'parent'; unlocked = true; render(); });
+  await p.click('[data-act=sound]'); assert.equal(await p.evaluate(() => S.sound), false); assert.ok(await p.isVisible('text=Звук: выкл'));
+  await approveOne('a2'); assert.equal(await p.evaluate(() => window.__plays), 1, 'при выключенном звуке тишина');
+}));

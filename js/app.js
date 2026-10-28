@@ -410,7 +410,7 @@ function viewParent(){
   k.goals.filter(g=>g.status==='ACTIVE').forEach(g=>{const p=goalProgress(k,g);h+=`<div class="task c1"><div class="tx"><h3>${esc(g.title)}</h3><div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span></div></div><button class="go" data-act="delgoal" data-id="${g.id}" aria-label="Убрать цель">🗑</button></div>`});
   h+='<div class="sec"><h2>Желания ребёнка</h2></div><button class="btn sm soft" data-act="addwish">+ Желание</button><div style="height:10px"></div>';
   k.wishes.forEach(w=>h+=`<div class="task c4"><div class="tx"><h3>${esc(w.title)}</h3><div class="meta">🪙 ${w.price}</div></div><button class="go" data-act="delwish" data-id="${w.id}">🗑</button></div>`);
-  h+='<div class="sec"><h2>Прочее</h2></div><div class="row"><button class="btn sm soft" data-act="lock">Выйти из кабинета</button><button class="btn sm red" data-act="reset">Сбросить всё</button></div>';
+  h+='<div class="sec"><h2>Прочее</h2></div><div class="row"><button class="btn sm soft" data-act="sound">'+(S.sound===false?'Звук: выкл':'Звук: вкл')+'</button><button class="btn sm soft" data-act="lock">Выйти из кабинета</button><button class="btn sm red" data-act="reset">Сбросить всё</button></div>';
   return h;
 }
 
@@ -460,6 +460,7 @@ document.addEventListener('click',async e=>{
   else if(act==='addgoal'){return goalForm({})}
   else if(act==='delgoal'){const g=K().goals.find(x=>x.id===id);if(g){g.status='ARCHIVED';save();toast('Цель убрана')}}   // архив: история недель сохраняется
   else if(act==='delwish'){K().wishes=K().wishes.filter(x=>x.id!==id);save()}
+  else if(act==='sound'){S.sound=S.sound===false;save()}   // родитель включает и выключает звук наград
   else if(act==='lock'){unlocked=false;introOpen=false}
   else if(act==='addtask'){return taskForm({})}
   else if(act==='catalog'){
