@@ -48,10 +48,10 @@ h1,h2,h3{margin:0}
 .card{background:#fff;border-radius:22px;padding:14px;margin-bottom:12px;box-shadow:0 6px 16px rgba(19,32,107,.08)}
 .empty{background:rgba(255,255,255,.8);border-radius:22px;padding:24px 14px;text-align:center;color:var(--muted);margin-bottom:12px}
 nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));max-width:496px;margin:0 auto;
-  background:#1B2230;border-radius:30px;display:flex;padding:6px;box-shadow:0 10px 26px rgba(0,0,0,.3)}
-nav button{flex:1;border:0;background:none;color:#C9D0E4;font:inherit;font-size:11px;font-weight:700;padding:6px 2px;border-radius:24px}
+  background:#fff;border-radius:30px;display:flex;padding:6px;box-shadow:0 10px 26px rgba(19,32,107,.22)}
+nav button{flex:1;border:0;background:none;color:#535A80;font:inherit;font-size:11px;font-weight:700;padding:6px 2px;border-radius:24px}
 nav button img{height:28px;display:block;margin:0 auto 2px}
-nav button.on{background:#8DEFC9;color:#0E3A2C}
+nav button.on{color:#1A55F0}
 .badge{background:var(--red);color:#fff;border-radius:99px;font-size:11px;padding:1px 6px;margin-left:3px}
 .welcome{text-align:center;padding-top:10px}
 .welcome img.logo{width:78%;max-width:300px}
@@ -79,3 +79,6 @@ label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bot
 .chk{width:30px;height:30px;border-radius:9px;border:2px solid #C9D3EA;background:#fff;color:#fff;font-weight:900;flex:none}.chk.on{background:var(--green);border-color:var(--green)}
 .card.off{opacity:.5}input.price{width:120px;margin:0}
 .big{font-size:44px;font-weight:900;text-align:center}
+
+.wallet{display:flex;align-items:center;gap:6px;background:#fff;border-radius:999px;padding:6px 14px 6px 8px;font-weight:800;box-shadow:0 4px 12px rgba(19,32,107,.12)}.wallet img{height:26px}
+.routewrap{margin:4px -4px 8px}.route{display:block;overflow:visible}.rnode{cursor:pointer;outline:none}

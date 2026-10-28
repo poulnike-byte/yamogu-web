@@ -224,13 +224,14 @@ function introAct(act,b){
 }
 let introOpen=false;
 // ---- UI ----
-let tab='tasks',unlocked=false;
+let tab=(/#tab=(home|goals|route|progress|wishes|parent)/.exec(location.hash)||[])[1]||'route',unlocked=false;   // вкладки: home, goals, route, progress, wishes (+ parent: вход с «Главной»)
 const $app=document.getElementById('app');
 function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;document.body.appendChild(e);setTimeout(()=>e.remove(),1800)}
 function modal(html){const m=document.createElement('div');m.className='modal';m.innerHTML='<div class="sheet">'+html+'</div>';
   m.addEventListener('click',e=>{if(e.target===m)m.remove()});document.body.appendChild(m);return m}
 const rew=t=>`<span>⭐ ${t.xp} XP</span><span>🪙 ${t.coins}</span>`;
 
+let tabChanged=false,routeFocus=true;   // при входе на «Маршрут» центрировать экран на текущем узле (как в Android)
 const needHomeHint=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.standalone&&!S.hintHome;
 const homeHint=()=>needHomeHint()?'<div class="card"><b>Чтобы данные не пропали</b><p class="muted" style="margin:4px 0 10px">Нажмите «Поделиться» → «На экран Домой» и открывайте ЯмогУ! со значка.</p><button class="btn sm soft" data-act="hidehint">Понятно</button></div>':'';
 function render(){
@@ -240,12 +241,18 @@ function render(){
     return;
   }
   const waiting=K().tasks.filter(t=>t.status==='WAITING_APPROVAL').length;
-  const nav=(id,ic,l,extra='')=>`<button data-tab="${id}" class="${tab===id?'on':''}"><img src="img/ref_nav_${ic}${tab===id?'':'_off'}.png" alt="">${l}${extra}</button>`;
-  $app.innerHTML=`<main>${tab==='tasks'?viewTasks():tab==='rewards'?viewRewards():tab==='progress'?viewProgress():viewParent()}</main>
-  <nav>${nav('tasks','home','Задания')}${nav('rewards','star','Награды')}${nav('progress','bars','Прогресс')}
-  ${nav('parent','menu','Родитель',waiting&&unlocked?`<span class="badge">${waiting}</span>`:'')}</nav>`;
+  const nav=(id,ic,l,lab)=>`<button data-tab="${id}" class="${tab===id?'on':''}" aria-label="${lab||l}${tab===id?', выбрано':''}">${navIcon(ic,tab===id)}${l}</button>`;
+  $app.innerHTML=`<main>${({home:viewTasks,goals:viewGoals,route:viewRoute,progress:viewProgress,wishes:viewRewards,parent:viewParent}[tab]||viewRoute)()}</main>
+  <nav>${nav('home','home','Главная')}${nav('goals','star','Мои цели')}${nav('route','check','Маршрут')}${nav('progress','bars','Прогресс')}${nav('wishes','cart','Желания','Мои желания')}</nav>`;
+  if(tab==='route'&&routeFocus){routeFocus=false;const c=$app.querySelector('.rnode.cur');if(c){const b=c.getBoundingClientRect();window.scrollBy(0,b.top+b.height/2-innerHeight*0.42)}}
+  else if(tab!=='route'&&tabChanged){window.scrollTo(0,0)}
+  tabChanged=false;
 }
 
+const navIcon=(ic,on)=>ic==='cart'
+  ?`<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" style="display:block;margin:0 auto 2px"><path fill="${on?'#1F6BFF':'#B4BAD3'}" d="M6.4,7.2H21.4L19.1,15.4H8.6Z"/>${on?'<path fill="#FFC83D" d="M8.4,9.2H19.2L18.3,12.4H9.3Z"/>':''}<path fill="none" stroke="${on?'#1F6BFF':'#8A92B8'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5,3.4H5.2L8.3,17.2H19.6"/><circle cx="10.5" cy="18.5" r="1.8" fill="${on?'#13206B':'#8A92B8'}"/><circle cx="18.5" cy="18.5" r="1.8" fill="${on?'#13206B':'#8A92B8'}"/></svg>`
+  :ic==='check'?`<img src="img/ref_stat_check.png" alt="" style="${on?'':'filter:grayscale(1);opacity:.55'}">`
+  :`<img src="img/ref_nav_${ic}${on?'':'_off'}.png" alt="">`;
 function topbar(title){const ki=kinfo();return `<div class="top"><div class="ava"><img src="${ki.img}" alt=""></div>
   <div class="hello">${title}<b>${ki.name}! 👋</b></div><button class="gear" data-act="switch" title="Сменить ребёнка">🔄</button></div>`}
 
@@ -257,17 +264,21 @@ function viewTasks(){
    <div class="info"><h2>Уровень ${lvl}</h2><div class="bar"><i style="width:${inLvl/2}%"></i></div><div class="small">${inLvl} / 200 XP</div>
    <div class="stats"><div class="st"><img src="img/ref_stat_star.png" alt="">${k.xp}<span>XP</span></div><div class="st"><img src="img/skill_money.png" alt="">${avail(k)}<span>монет</span></div></div></div></div>
    <div class="sec"><h2>Мои задания</h2><span class="cnt">${done}/${k.tasks.length}</span></div>`;
-  if(!k.tasks.length)h+='<div class="empty">Пока нет заданий.<br>Попроси родителя добавить их во вкладке «Родитель».</div>';
+  if(!k.tasks.length)h+='<div class="empty">Пока нет заданий.<br>Попроси родителя добавить их: кнопка «Родителям» внизу.</div>';
   av.forEach((t,i)=>h+=`<div class="task c${i%5}"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3>${t.desc?`<div class="desc">${esc(t.desc)}</div>`:''}<div class="meta">${rew(t)}</div></div><button class="go" data-act="submit" data-id="${t.id}" aria-label="Готово">›</button></div>`);
   wa.forEach(t=>h+=`<div class="task c2"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">Ждёт проверки родителя ⏳</div></div></div>`);
   co.slice(-8).reverse().forEach(t=>h+=`<div class="task c3" style="opacity:.8"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div><img class="ok" src="img/ref_check_done.png" alt=""></div>`);
-  return h;
+  return h+'<button class="btn full soft" data-act="toparent" style="margin-top:8px">Родителям</button>';
+}
+
+function viewGoals(){
+  return topbar('Мои цели,')+'<div class="card"><h2>Недельные цели</h2><p class="muted">Цели, которые ставит родитель и которые считаются по подтверждённым заданиям, появятся здесь в следующей версии. Сейчас этот экран переносится из приложения для Android.</p></div>';
 }
 
 function viewRewards(){
   const k=K(),av=avail(k),fz=k.purchases.filter(p=>p.status==='BOUGHT'||p.status==='POSTPONED').reduce((x,p)=>x+p.price,0);
   let h=topbar('Мои награды,')+`<div class="hero" style="min-height:0"><div class="big">🪙 ${av}</div><div class="small" style="text-align:center">мой баланс${fz?' · ждёт выдачи: '+fz:''} · ⭐ ${k.xp} XP</div></div><div class="sec"><h2>Мои желания</h2></div>`;
-  if(!k.wishes.length)h+='<div class="empty">Желаний пока нет.<br>Родитель создаст их в «Родитель» → «Знакомство».</div>';
+  if(!k.wishes.length)h+='<div class="empty">Желаний пока нет.<br>Родитель создаст их: «Главная» → «Родителям» → «Знакомство».</div>';
   k.wishes.forEach((w,i)=>{const op=openPurchase(k,w.id),can=!op&&av>=w.price;
     h+=`<div class="task c${(i+3)%5}"><div class="tx"><h3>${esc(w.title)}</h3><div class="meta"><span>🪙 ${w.price}</span><span>~${days(w.price)} дн.</span></div>
     <div class="bar"><i style="width:${Math.min(100,100*av/w.price)}%"></i></div></div>
@@ -330,11 +341,13 @@ function taskForm(pre){
 
 document.addEventListener('click',async e=>{
   const tb=e.target.closest('[data-tab]');
-  if(tb){tab=tb.dataset.tab;if(tab!=='parent'){unlocked=false;introOpen=false}return render()}
+  if(tb){tab=tb.dataset.tab;tabChanged=true;routeFocus=true;if(tab!=='parent'){unlocked=false;introOpen=false}return render()}
   const b=e.target.closest('[data-act]');if(!b)return;
   const id=b.dataset.id,act=b.dataset.act,pinVal=()=>(document.getElementById('pin')||{}).value||'';
   if(act==='hidehint'){S.hintHome=1;save()}
-  else if(act==='who'){S.cur=id;save();if(!b.dataset.stay){tab='tasks';unlocked=false}}
+  else if(act==='who'){S.cur=id;save();if(!b.dataset.stay){tab='route';unlocked=false}}
+  else if(act==='toparent'){tab='parent';tabChanged=true}
+  else if(act==='rnode'){return routeTaskDialog(id)}
   else if(act==='switch'){S.cur=null;unlocked=false;save()}
   else if(act==='submit'){submit(id);toast('Отправлено родителю 👍')}
   else if(act==='buy'){const k=K(),w=k.wishes.find(x=>x.id===id);if(w&&!openPurchase(k,w.id)&&avail(k)>=w.price){k.purchases.push({id:uid(),wishId:w.id,title:w.title,price:w.price,status:'BOUGHT'});save();toast('Попросили родителя 🎁')}}
