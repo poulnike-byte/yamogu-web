@@ -22,7 +22,8 @@ const CATALOG=[
 // goals: [{id,title,target(1..7),status:ACTIVE|ARCHIVED,created:'YYYY-MM-DD'}]; log: [{day:'YYYY-MM-DD',title}] — подтверждённые задания (прогресс целей считается из него, как GoalsReader в Android)
 // templates: [{id,title,desc,coins,xp,rec:'daily'|'weekdays',active}] — шаблоны повторяющихся заданий; на каждый день создаётся задание с id «шаблон:дата» (повтор не дублируется)
 // task.date: 'YYYY-MM-DD' (задание на этот день); у старых заданий даты нет — они считаются «на сегодня» всегда
-const blank=()=>({tasks:[],xp:0,coins:0,wishes:[],purchases:[],goals:[],log:[],templates:[]});
+const blank=()=>({tasks:[],xp:0,coins:0,wishes:[],purchases:[],goals:[],log:[],templates:[],skills:[]});
+// skills: [{id,title,stage:LEARNING|PRACTICING|INDEPENDENT|HABIT,since,status}]; task/template/goal.skill — id навыка (или нет); log: {day,title,skill,help} (help — как справился: INDEPENDENT|AFTER_REMINDER|SMALL_HELP|TOGETHER|UNKNOWN)
 const GOAL_TEMPLATES=[
  {key:'MORNING_ALONE',title:'Собираться утром без лишних напоминаний',target:5},
  {key:'BAG_EVENING',title:'Собирать рюкзак с вечера',target:5},
@@ -34,7 +35,7 @@ const dayStr=(d=new Date())=>d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d
 const mondayOf=s=>{const [y,m,d]=s.split('-').map(Number),dt=new Date(y,m-1,d);dt.setDate(dt.getDate()-((dt.getDay()+6)%7));return dayStr(dt)};
 const addDays=(s,n)=>{const [y,m,d]=s.split('-').map(Number),dt=new Date(y,m-1,d+n);return dayStr(dt)};
 // Сколько подтверждённых заданий в неделе, начинающейся в понедельник mon (строки YYYY-MM-DD сравниваются как текст)
-const weekCount=(k,mon)=>{const sun=addDays(mon,6);return k.log.filter(e=>e.day>=mon&&e.day<=sun).length};
+const weekCount=(k,mon,skill)=>{const sun=addDays(mon,6);return k.log.filter(e=>e.day>=mon&&e.day<=sun&&(!skill||e.skill===skill)).length};
 const isToday=t=>!t.date||t.date===dayStr();
 const todays=k=>k.tasks.filter(isToday);
 const occursOn=(rec,s)=>{const [y,m,d]=s.split('-').map(Number),w=new Date(y,m-1,d).getDay();return rec==='daily'||(rec==='weekdays'&&w>=1&&w<=5)};
@@ -44,18 +45,18 @@ function ensureOcc(){
   for(const id in S.kids){const k=S.kids[id];
     k.templates.forEach(tp=>{if(!tp.active||!occursOn(tp.rec,day))return;const oid=tp.id+':'+day;
       if(k.tasks.some(t=>t.id===oid))return;
-      k.tasks.push({id:oid,tpl:tp.id,date:day,title:tp.title,desc:tp.desc,coins:tp.coins,xp:tp.xp,status:'AVAILABLE'});n++})}
+      k.tasks.push({id:oid,tpl:tp.id,date:day,title:tp.title,desc:tp.desc,skill:tp.skill||null,coins:tp.coins,xp:tp.xp,status:'AVAILABLE'});n++})}
   if(n)save();return n;
 }
 function goalProgress(k,g){
-  const thisMon=mondayOf(dayStr()),done=weekCount(k,thisMon);let mon=mondayOf(g.created||thisMon),reached=0,guard=0;
-  while(mon<=thisMon&&guard++<520){if(weekCount(k,mon)>=g.target)reached++;mon=addDays(mon,7)}
+  const thisMon=mondayOf(dayStr()),done=weekCount(k,thisMon,g.skill);let mon=mondayOf(g.created||thisMon),reached=0,guard=0;
+  while(mon<=thisMon&&guard++<520){if(weekCount(k,mon,g.skill)>=g.target)reached++;mon=addDays(mon,7)}
   return{done,reachedNow:done>=g.target,weeks:reached};
 }
 const freshIntro=()=>({step:0,done:false,family:{},wish:{},wk:null,draft:null});
 function normalize(s){
   s.intro=s.intro||freshIntro();
-  for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];k.templates=k.templates||[];
+  for(const id in s.kids){const k=s.kids[id];k.wishes=k.wishes||[];k.purchases=k.purchases||[];k.goals=k.goals||[];k.log=k.log||[];k.templates=k.templates||[];k.skills=k.skills||[];
     (k.spent||[]).forEach(p=>k.purchases.push({id:uid(),wishId:'',title:p.title,price:p.price,status:'DELIVERED'}));delete k.spent}
   return s;
 }
@@ -79,8 +80,8 @@ const K=()=>S.kids[S.cur], kinfo=()=>KIDS.find(k=>k.id===S.cur);
 // ---- Правила (как TaskRepositoryRules.kt) ----
 function submit(id){const t=K().tasks.find(x=>x.id===id&&x.status==='AVAILABLE');if(t){t.status='WAITING_APPROVAL';t.sub=dayStr();save()}}
 function reject(id){const t=K().tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(t){t.status='AVAILABLE';save()}}
-function approve(id){const k=K(),t=k.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(!t)return; // награда ровно один раз
-  t.status='COMPLETED';k.xp+=t.xp;k.coins+=t.coins;k.log.push({day:dayStr(),title:t.title});save()}
+function approve(id,help){const k=K(),t=k.tasks.find(x=>x.id===id&&x.status==='WAITING_APPROVAL');if(!t)return; // награда ровно один раз
+  t.status='COMPLETED';k.xp+=t.xp;k.coins+=t.coins;k.log.push({day:dayStr(),title:t.title,skill:t.skill||null,help:help||'UNKNOWN'});save()}
 function del(id){const k=K(),i=k.tasks.findIndex(x=>x.id===id&&x.status==='AVAILABLE');if(i>=0){k.tasks.splice(i,1);save()}}
 
 // ---- PIN (соль + SHA-256) ----
@@ -310,7 +311,7 @@ function viewGoals(){
   act.forEach((g,i)=>{const p=goalProgress(k,g);
     h+=`<div class="task c${(i+1)%5}"><div class="tx"><h3>${esc(g.title)}</h3>
       <div class="bar"><i style="width:${Math.min(100,Math.round(100*p.done/g.target))}%"></i></div>
-      <div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span>${p.reachedNow?'<span>🏆 Цель недели достигнута!</span>':''}</div>
+      <div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span>${g.skill&&skillById(k,g.skill)?`<span>Навык: ${esc(skillById(k,g.skill).title)}</span>`:''}${p.reachedNow?'<span>🏆 Цель недели достигнута!</span>':''}</div>
       ${p.weeks?`<div class="small">Недель с достигнутой целью: ${p.weeks}</div>`:''}</div></div>`});
   return h+'<p class="small" style="text-align:center">Если неделя не получилась, ничего не отнимается: в понедельник цель начинается заново.</p>';
 }
@@ -318,9 +319,10 @@ function viewGoals(){
 function goalForm(pre){
   const k=K(),m=modal(`<h3>Цель на неделю: ${kinfo().name}</h3>
    <div class="row" style="margin-bottom:10px">${GOAL_TEMPLATES.map((t,i)=>`<button class="btn sm soft" data-tpl="${i}">${esc(t.title)}</button>`).join('')}</div>
-   <label>Название</label><input id="g-t" maxlength="60" value="${esc(pre.title||'')}">
+   <label>Название</label><input id="g-t" maxlength="60" value="${esc(pre.title||'')}"><label>Навык (какие задания считаются)</label>${skillSelect(k,'g-s',true,'Любые задания')}
    <label>Сколько подтверждённых заданий в неделю (1–7)</label><input id="g-n" type="number" inputmode="numeric" value="${pre.target||5}">
    <button class="btn full" id="g-ok">Поставить цель</button>`);
+  bindSkillSelect(m,'g-s');
   m.addEventListener('click',ev=>{const b=ev.target.closest('[data-tpl]');if(b){const t=GOAL_TEMPLATES[+b.dataset.tpl];m.querySelector('#g-t').value=t.title;m.querySelector('#g-n').value=t.target}});
   m.querySelector('#g-ok').onclick=()=>{
     const title=m.querySelector('#g-t').value.trim(),n=parseInt(m.querySelector('#g-n').value)||0,act=k.goals.filter(g=>g.status==='ACTIVE');
@@ -328,7 +330,8 @@ function goalForm(pre){
     if(n<1||n>7)return toast('Цель: от 1 до 7 в неделю');
     if(act.length>=10)return toast('Не больше 10 активных целей');
     if(act.some(g=>g.title.toLowerCase()===title.toLowerCase()))return toast('Такая цель уже есть');
-    k.goals.push({id:uid(),title,target:n,status:'ACTIVE',created:dayStr()});save();m.remove();render()};
+    const sk=resolveSkill(m,k,'g-s');if(sk.err)return toast(sk.err);
+    k.goals.push({id:uid(),title,target:n,skill:sk.id,status:'ACTIVE',created:dayStr()});save();m.remove();render()};
 }
 
 function viewRewards(){
@@ -369,6 +372,7 @@ function viewProgress(){
     <div class="small" style="text-align:center;margin-top:10px">Подтверждено на этой неделе: <b>${P.thisWeek}</b> · на прошлой: ${P.prevWeek}</div>${cmp?`<div class="small" style="text-align:center">${cmp}</div>`:''}
     <div class="small" style="text-align:center;margin-top:6px">Дни без заданий — не беда: ничего не отнимается.</div></div>
    <div class="card"><h2>Последние 4 недели</h2><div style="display:flex;gap:4px;margin-top:8px">${weeks}</div></div>
+   ${activeSkills(k).length?'<div class="sec"><h2>Мои навыки</h2></div>'+activeSkills(k).map(s=>childSkillCard(k,s)).join(''):''}
    <div class="card c4"><div class="row" style="align-items:center;flex-wrap:nowrap"><img src="img/ref_stat_cup.png" height="44" alt=""><div style="flex:1"><b>${P.achievements} ${plural(P.achievements,'достижение','достижения','достижений')}</b><div class="small">Достижение — достигнутая цель за неделю и первое подтверждённое задание.</div></div></div></div>
    <div class="grid">
     <div class="card c2" style="text-align:center"><img src="img/ref_stat_star.png" height="56" alt=""><div class="big" style="font-size:30px">${k.xp}</div><div class="small">опыта</div></div>
@@ -392,7 +396,7 @@ function viewParent(){
   <div class="sec"><h2>Ожидают проверки</h2><span class="cnt">${wa.length}</span></div>`;
   if(!wa.length)h+='<div class="empty">Нечего проверять</div>';
   wa.forEach(t=>h+=`<div class="task c1"><img class="ic" src="${iconFor(t.title)}" alt=""><div class="tx"><h3>${esc(t.title)}</h3><div class="meta">${rew(t)}</div></div>
-    <button class="go" style="background:#22C274;color:#fff" data-act="approve" data-id="${t.id}">✓</button><button class="go" style="background:#F0486B;color:#fff" data-act="reject" data-id="${t.id}">✕</button></div>`);
+    <button class="go" style="background:#22C274;color:#fff" data-act="review" data-id="${t.id}" aria-label="Проверить">✓</button><button class="go" style="background:#F0486B;color:#fff" data-act="reject" data-id="${t.id}">✕</button></div>`);
   const pd=k.purchases.filter(p=>p.status==='BOUGHT'||p.status==='POSTPONED');
   if(pd.length){h+=`<div class="sec"><h2>Подарки к выдаче</h2><span class="cnt">${pd.length}</span></div>`;
     pd.forEach(p=>h+=`<div class="task c4"><div class="tx"><h3>🎁 ${esc(p.title)}</h3><div class="meta">🪙 ${p.price}${p.status==='POSTPONED'?' · отложено':''}</div><div class="row" style="margin-top:8px"><button class="btn sm green" data-act="deliver" data-id="${p.id}">Выдано</button><button class="btn sm soft" data-act="postpone" data-id="${p.id}">Отложить</button><button class="btn sm red" data-act="cancelp" data-id="${p.id}">Отменить</button></div></div></div>`)}
@@ -401,6 +405,7 @@ function viewParent(){
   const tps=k.templates.filter(x=>x.active);
   if(tps.length){h+=`<div class="sec"><h2>Повторяются</h2><span class="cnt">${tps.length}</span></div>`;
     tps.forEach(x=>h+=`<div class="task c3"><img class="ic" src="${iconFor(x.title)}" alt=""><div class="tx"><h3>${esc(x.title)}</h3><div class="meta"><span>${x.rec==='daily'?'каждый день':'по будням'}</span><span>🪙 ${x.coins}</span></div></div><button class="go" data-act="deltpl" data-id="${x.id}" aria-label="Остановить повтор">🗑</button></div>`)}
+  h+=parentSkillsBlock(k);
   h+='<div class="sec"><h2>Цели на неделю</h2></div><button class="btn sm soft" data-act="addgoal">+ Цель</button><div style="height:10px"></div>';
   k.goals.filter(g=>g.status==='ACTIVE').forEach(g=>{const p=goalProgress(k,g);h+=`<div class="task c1"><div class="tx"><h3>${esc(g.title)}</h3><div class="meta"><span>${Math.min(p.done,g.target)} из ${g.target} на этой неделе</span></div></div><button class="go" data-act="delgoal" data-id="${g.id}" aria-label="Убрать цель">🗑</button></div>`});
   h+='<div class="sec"><h2>Желания ребёнка</h2></div><button class="btn sm soft" data-act="addwish">+ Желание</button><div style="height:10px"></div>';
@@ -414,14 +419,17 @@ function taskForm(pre){
    <label>Описание / шаги</label><textarea id="f-d" rows="3">${esc(pre.d||'')}</textarea>
    <div class="grid"><div><label>Монеты</label><input id="f-c" type="number" inputmode="numeric" value="${pre.c??10}"></div>
    <div><label>XP</label><input id="f-x" type="number" inputmode="numeric" value="${pre.x??10}"></div></div>
+   <label>Навык</label>${skillSelect(K(),'f-s')}
    <label>Когда</label><select id="f-r"><option value="">Один раз, сегодня</option><option value="daily">Каждый день</option><option value="weekdays">По будням (пн–пт)</option></select>
    <button class="btn full" id="f-ok">Добавить</button>`);
+  bindSkillSelect(m,'f-s');
   m.querySelector('#f-ok').onclick=()=>{
     const t=m.querySelector('#f-t').value.trim();if(!t)return toast('Нужно название');
+    const sk=resolveSkill(m,K(),'f-s');if(sk.err)return toast(sk.err);
     const n=(id)=>Math.min(10000,Math.max(0,parseInt(m.querySelector(id).value)||0));
     const d=m.querySelector('#f-d').value.trim(),rec=m.querySelector('#f-r').value;
-    if(rec){K().templates.push({id:uid(),title:t,desc:d,coins:n('#f-c'),xp:n('#f-x'),rec,active:true});ensureOcc()}   // задание на сегодня появится само, если сегодня подходит по расписанию
-    else K().tasks.push({id:uid(),date:dayStr(),title:t,desc:d,coins:n('#f-c'),xp:n('#f-x'),status:'AVAILABLE'});
+    if(rec){K().templates.push({id:uid(),title:t,desc:d,skill:sk.id,coins:n('#f-c'),xp:n('#f-x'),rec,active:true});ensureOcc()}   // задание на сегодня появится само, если сегодня подходит по расписанию
+    else K().tasks.push({id:uid(),date:dayStr(),title:t,desc:d,skill:sk.id,coins:n('#f-c'),xp:n('#f-x'),status:'AVAILABLE'});
     save();m.remove();render();
   };
 }
@@ -443,7 +451,8 @@ document.addEventListener('click',async e=>{
   else if(act.startsWith('i_')){introAct(act,b)}
   else if(act==='newpin'){const p=pinVal();if(!/^\d{4,6}$/.test(p))return toast('PIN: 4–6 цифр');await setPin(p);unlocked=true;introOpen=!S.intro.done}
   else if(act==='unlock'){if(await checkPin(pinVal())){unlocked=true;introOpen=!S.intro.done}else return toast('Неверный PIN')}
-  else if(act==='approve'){approve(id);toast('Награда выдана ⭐')}
+  else if(act==='review'){return reviewDialog(id)}
+  else if(act==='stage'){moveStage(K(),id,Number(b.dataset.dir))}
   else if(act==='reject'){reject(id)}
   else if(act==='del'){del(id)}
   else if(act==='deltpl'){const k=K(),x=k.templates.find(q=>q.id===id);   // остановить повтор: завтрашних заданий не будет, сегодняшнее невыполненное убирается; история остаётся
