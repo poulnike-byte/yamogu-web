@@ -194,5 +194,7 @@ body.onboarding #app{padding-top:0;max-width:none}
 @media(prefers-reduced-motion:reduce){#boot{transition:none}}
 
 /* Blend the illustration into the system sky color without moving controls. */
-.wl::before{content:"";position:fixed;inset:0 0 auto;height:calc(90px + env(safe-area-inset-top,0px));background:linear-gradient(to bottom,var(--sky-bg) 0%,rgba(207,232,251,.9) 24%,rgba(207,232,251,0) 100%);pointer-events:none;z-index:0}
+
 .wl-col{z-index:1}
+
+html.onboarding,html.app-starting{background-color:#50BFF4;background-image:linear-gradient(to bottom,#50BFF4 55%,var(--paper))}

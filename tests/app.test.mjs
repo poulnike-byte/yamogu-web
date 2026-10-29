@@ -201,8 +201,8 @@ test('Онбординг: приветствие, знакомство, три �
     document.body.classList.contains('onboarding'),
     getComputedStyle(document.body).backgroundImage
   ]), ['cover', true, 'linear-gradient(rgb(207, 232, 251) 55%, rgb(253, 250, 244))'], 'фон заполняет экран; системные зоны: небо сверху, бумага снизу, без яркого голубого');
-  assert.equal(await p.evaluate(() => document.querySelector('meta[name=theme-color]').content), '#CFE8FB');
-  assert.equal(await p.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), 'rgb(207, 232, 251)', 'root canvas has opaque sky background');
+  assert.equal(await p.evaluate(() => document.querySelector('meta[name=theme-color]').content), '#50BFF4');
+  assert.equal(await p.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), 'rgb(80, 191, 244)', 'root canvas has opaque sky background');
   assert.equal(await p.locator('meta[name=apple-mobile-web-app-status-bar-style]').count(), 0, 'deprecated status-bar override removed');
   await p.waitForSelector('#boot', { state: 'detached', timeout: 6000 });
   await p.click('[data-act=ob_next]');                                   // «Начать»
