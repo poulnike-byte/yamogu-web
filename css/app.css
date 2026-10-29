@@ -185,3 +185,10 @@ html[data-welcome-images=fallback] .wl-bg{display:none}
 .wl .btn.full{width:100%;max-width:360px;min-height:56px;font-family:inherit;font-size:20px;font-weight:700;letter-spacing:0;border-radius:20px;background:var(--blue);box-shadow:0 4px 0 var(--blue-depth)}
 .wl-parent{font-family:inherit;font-size:17px;font-weight:600;margin-top:12px;color:var(--ink)}
 @media(max-height:700px){.wl-col{padding-top:calc(10px + env(safe-area-inset-top))!important}.wl-logo{max-height:100px;max-width:290px}.wl-gap{min-height:170px}.wl-actions{padding-top:32px}.wl-benefit{margin-bottom:12px}}
+
+/* Paint the root canvas as well as the body: iOS system areas must not inherit transparent white. */
+html.onboarding{background-color:var(--sky-bg);background-image:linear-gradient(to bottom,var(--sky-bg) 55%,var(--paper));min-height:100%;min-height:100dvh}
+body.onboarding{background-color:var(--paper);min-height:100%;min-height:100dvh}
+body.onboarding #app{padding-top:0;max-width:none}
+.wl-col{min-height:100%;min-height:100dvh}
+@media(prefers-reduced-motion:reduce){#boot{transition:none}}

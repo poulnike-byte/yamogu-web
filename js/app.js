@@ -272,6 +272,8 @@ const homeHint=()=>needHomeHint()?'<div class="card"><b>Чтобы данные 
 function render(){
   ensureOcc();applyNames();
   document.body.classList.toggle('onboarding',!S.onb.done);
+  document.documentElement.classList.remove('app-starting');
+  document.documentElement.classList.toggle('onboarding',!S.onb.done);
   if(!S.onb.done){$app.innerHTML=onboardView();return}
   if(!S.cur){
     $app.innerHTML=`<main class="welcome"><img class="logo" src="img/ref_logo.png" alt="ЯмогУ!"><p>Я учусь. Я пробую. Я могу!</p>
