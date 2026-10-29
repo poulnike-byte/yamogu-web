@@ -158,9 +158,11 @@ nav{background:rgba(255,255,255,.94)}
 @media (max-width:340px){.hello b{font-size:20px}.routepage .top{gap:8px}}
 body[data-mode=route]{touch-action:none}
 
-/* Приветственный экран (дизайн 29.10.2026): фон без текста по центру (contain, без растяжения), логотип/слоган сверху, «Начать» и «Я родитель» внизу. Прокрутка при крупном шрифте. */
+/* Приветственный экран (дизайн 29.10.2026): фон заполняет весь экран с допустимым
+   симметричным кадрированием, логотип/слоган сверху, действия в safe area снизу. */
+body.onboarding{background:#46BAF0}
 .wl{position:fixed;inset:0;z-index:5;background:#9DDBF4;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.wl>.wl-bg{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none}
+.wl>.wl-bg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none}
 .wl-col{position:relative;box-sizing:border-box;max-width:520px;min-height:100%;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 24px calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;text-align:center;color:#071C55;font-weight:700}
 .wl-logo{display:block;width:100%;max-width:460px;max-height:170px;object-fit:contain}
 .wl-slogan{margin:0;font-size:26px;line-height:1.2;text-wrap:balance}

@@ -196,6 +196,11 @@ test('Онбординг: приветствие, знакомство, три �
   let p = s.page; await p.waitForFunction(() => S.onb);
   assert.ok(await p.isVisible('text=Помогаем ребенку становиться самостоятельнее'), 'на чистом устройстве показывается приветствие');
   assert.ok(await p.isVisible('[data-act=ob_parent]'), 'есть кнопка «Я родитель»');
+  assert.deepEqual(await p.evaluate(() => [
+    getComputedStyle(document.querySelector('.wl-bg')).objectFit,
+    document.body.classList.contains('onboarding'),
+    getComputedStyle(document.body).backgroundColor
+  ]), ['cover', true, 'rgb(70, 186, 240)'], 'фон заполняет экран, системные зоны получают небесный цвет');
   await p.click('[data-act=ob_next]');                                   // «Начать»
   assert.ok(await p.isVisible('text=Давай познакомимся!'));
   await p.click('[data-act=ob_child][data-id=vika]');

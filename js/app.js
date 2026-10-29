@@ -271,6 +271,7 @@ const needHomeHint=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)&&!navigator.
 const homeHint=()=>needHomeHint()?'<div class="card"><b>Чтобы данные не пропали</b><p class="muted" style="margin:4px 0 10px">Нажмите «Поделиться» → «На экран Домой» и открывайте ЯмогУ! со значка.</p><button class="btn sm soft" data-act="hidehint">Понятно</button></div>':'';
 function render(){
   ensureOcc();applyNames();
+  document.body.classList.toggle('onboarding',!S.onb.done);
   if(!S.onb.done){$app.innerHTML=onboardView();return}
   if(!S.cur){
     $app.innerHTML=`<main class="welcome"><img class="logo" src="img/ref_logo.png" alt="ЯмогУ!"><p>Я учусь. Я пробую. Я могу!</p>
