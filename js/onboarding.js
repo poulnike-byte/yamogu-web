@@ -15,10 +15,10 @@ function onboardView(){
   const O=S.onb,st=O.step,kid=KIDS.find(k=>k.id===O.child);
   const dots=`<div role="img" aria-label="Шаг ${st+1} из 3" style="display:flex;gap:8px;justify-content:center;margin:6px 0 14px">${[0,1,2].map(i=>`<i style="width:${i===st?28:10}px;height:10px;border-radius:5px;background:${i===st?'var(--blue)':'var(--dot-off)'};display:block"></i>`).join('')}</div>`;
   const back=st>0?'<button class="gear" data-act="ob_back" aria-label="Назад">‹</button>':'';
-  if(st===0)return`<main class="welcome"><img class="logo" src="img/ref_logo.png" alt="ЯмогУ!"><p>Я учусь. Я пробую. Я могу!</p>
-    <div style="position:relative;margin:10px auto;max-width:300px"><img src="${kid.img}" alt="${kid.name} приветствует тебя" style="width:170px;display:block;margin:0 auto 0 0">
-    <div style="position:absolute;right:0;top:14px;background:var(--white);border-radius:22px;padding:12px 14px;font-weight:800;color:var(--ink);font-size:17px;line-height:1.25;box-shadow:0 4px 12px rgba(19,32,107,.12)">Привет!<br>Я ${kid.name}!<br>Давай учиться<br>вместе!</div></div>
-    <button class="btn full" data-act="ob_next" style="max-width:340px;margin:12px auto 0">Начать</button></main>`;
+  if(st===0)return`<div class="wl"><img class="wl-bg" src="img/welcome_background.png" alt="" aria-hidden="true"><main class="wl-col" style="padding-bottom:calc(12px + env(safe-area-inset-bottom))">
+    <img class="wl-logo" src="img/yamogu_logo.png" alt="ЯмогУ!"><p class="wl-slogan">Я пробую, я учусь, я могу</p><div class="wl-gap"></div>
+    <p class="wl-benefit">Помогаем ребенку становиться самостоятельнее</p>
+    <button class="btn full" data-act="ob_next">Начать</button><button class="wl-parent" data-act="ob_parent">Я родитель</button></main></div>`;
   if(st===1){const ages=obAges(O.child);
     return`<main><div class="top">${back}<div class="hello"><b>Давай познакомимся!</b></div></div>${dots}
     <label>Как тебя зовут?</label><input id="ob-name" maxlength="${OB_NAME_MAX}" placeholder="${kid.name}" value="${esc(O.name)}" autocomplete="off">
@@ -34,6 +34,7 @@ function onboardAct(act,b){
   const O=S.onb,id=b.dataset.id;
   const nameEl=document.getElementById('ob-name');if(nameEl)O.name=nameEl.value;   // имя вводится без перерисовки, забираем при любом действии
   if(act==='ob_back'){O.step=Math.max(0,O.step-1)}
+  else if(act==='ob_parent'){S.cur=O.child;O.done=true;tab='parent';tabChanged=true;parentPage='hub';unlocked=false}   // «Я родитель» → прежний вход в кабинет (PIN)
   else if(act==='ob_age'){O.age=Number(id)}
   else if(act==='ob_child'){O.child=id;if(!obAges(id).includes(O.age))O.age=null}
   else if(act==='ob_skill'){

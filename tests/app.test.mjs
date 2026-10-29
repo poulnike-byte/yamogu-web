@@ -194,7 +194,8 @@ test('Желания: покупка с подтверждением, цель, 
 
 test('Онбординг: приветствие, знакомство, три навыка; повторно не показывается', async () => session(async s => {
   let p = s.page; await p.waitForFunction(() => S.onb);
-  assert.ok(await p.isVisible('text=Давай учиться'), 'на чистом устройстве показывается приветствие');
+  assert.ok(await p.isVisible('text=Помогаем ребенку становиться самостоятельнее'), 'на чистом устройстве показывается приветствие');
+  assert.ok(await p.isVisible('[data-act=ob_parent]'), 'есть кнопка «Я родитель»');
   await p.click('[data-act=ob_next]');                                   // «Начать»
   assert.ok(await p.isVisible('text=Давай познакомимся!'));
   await p.click('[data-act=ob_child][data-id=vika]');
