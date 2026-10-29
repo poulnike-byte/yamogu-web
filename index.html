@@ -8,14 +8,21 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="ЯмогУ!">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#46BAF0">
+<meta name="theme-color" content="#CFE8FB">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="stylesheet" href="css/app.css">
+<style>
+/* Экран загрузки встроен в HTML, чтобы показаться до css/js. Цвета как у приветствия: небо сверху, бумага снизу */
+#boot{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:linear-gradient(to bottom,#CFE8FB 55%,#FDFAF4);color:#101C48;font:600 16px/1.3 -apple-system,system-ui,"Segoe UI",Arial,sans-serif;transition:opacity .18s}
+#boot img{width:70%;max-width:300px;max-height:120px;object-fit:contain}
+#boot.boot-out{opacity:0;pointer-events:none}
+</style>
 </head>
 <body>
+<div id="boot" role="status" aria-live="polite"><img src="img/yamogu_logo.png" alt="ЯмогУ!"><span>Загружаем…</span></div>
 <div id="app"></div>
-<script src="js/vendor/confetti.browser.min.js"></script><script src="js/vendor/howler.min.js"></script><script src="js/tokens.js"></script><script src="js/icons.js"></script><script src="js/storage.js"></script>
+<script src="js/startup.js"></script><script src="js/vendor/confetti.browser.min.js"></script><script src="js/vendor/howler.min.js"></script><script src="js/tokens.js"></script><script src="js/icons.js"></script><script src="js/storage.js"></script>
 <script src="js/app.js"></script><script src="js/skills.js"></script><script src="js/report.js"></script><script src="js/wishes.js"></script><script src="js/onboarding.js"></script><script src="js/cosmetics.js"></script><script src="js/backup.js"></script><script src="js/parent.js"></script>
 <script src="js/route.js"></script><script src="js/valley.js"></script>
 </body>

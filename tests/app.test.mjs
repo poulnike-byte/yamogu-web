@@ -199,8 +199,10 @@ test('Онбординг: приветствие, знакомство, три �
   assert.deepEqual(await p.evaluate(() => [
     getComputedStyle(document.querySelector('.wl-bg')).objectFit,
     document.body.classList.contains('onboarding'),
-    getComputedStyle(document.body).backgroundColor
-  ]), ['cover', true, 'rgb(70, 186, 240)'], 'фон заполняет экран, системные зоны получают небесный цвет');
+    getComputedStyle(document.body).backgroundImage
+  ]), ['cover', true, 'linear-gradient(rgb(207, 232, 251) 55%, rgb(253, 250, 244))'], 'фон заполняет экран; системные зоны: небо сверху, бумага снизу, без яркого голубого');
+  assert.equal(await p.evaluate(() => document.querySelector('meta[name=theme-color]').content), '#CFE8FB');
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 6000 });
   await p.click('[data-act=ob_next]');                                   // «Начать»
   assert.ok(await p.isVisible('text=Давай познакомимся!'));
   await p.click('[data-act=ob_child][data-id=vika]');
@@ -330,4 +332,36 @@ test('Резервная копия: сохранить в файл, восст�
   // напоминание на главной странице кабинета: свежая копия — молчим, старая — напоминаем
   assert.ok(await p.isVisible('text=Моя семья')); assert.ok(!await p.isVisible('text=Сделайте копию данных'));
   await p.evaluate(() => { S.lastBackup = addDays(dayStr(), -20); render(); }); assert.ok(await p.isVisible('text=Сделайте копию данных'));
+}));
+
+// Запуск приветствия: экран загрузки, медленная и сломанная картинка
+async function freshPage(fn, routeFn) {
+  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  try {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+    const page = await ctx.newPage();
+    if (routeFn) await page.route('**/img/welcome_background.png*', routeFn);
+    await fn(page);
+  } finally { await browser.close(); }
+}
+test('Запуск: пока фон приветствия грузится, виден экран загрузки, потом приветствие', async () => freshPage(async p => {
+  await p.goto(base);
+  await p.waitForSelector('#boot[role=status]');
+  assert.ok(await p.isVisible('#boot img'), 'логотип на экране загрузки');
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 6000 });
+  assert.deepEqual(await p.evaluate(() => [document.querySelector('.wl-bg').naturalWidth > 0, document.documentElement.dataset.welcomeImages]), [true, 'ok'], 'фон загружен до показа');
+}, async r => { await new Promise(res => setTimeout(res, 1500)); await r.continue(); }));
+test('Запуск: сломанный фон не блокирует приложение, есть запасной фон', async () => freshPage(async p => {
+  await p.goto(base);
+  await p.waitForSelector('#boot', { state: 'detached', timeout: 6000 });
+  assert.ok(await p.isVisible('[data-act=ob_next]'), 'кнопка «Начать» доступна');
+  assert.equal(await p.evaluate(() => document.documentElement.dataset.welcomeImages), 'fallback');
+  await p.click('[data-act=ob_next]'); assert.ok(await p.isVisible('text=Давай познакомимся!'));
+}, r => r.abort()));
+test('Запуск: у существующего пользователя экран загрузки снимается без приветствия', async () => freshPage(async p => {
+  await p.goto(base); await p.waitForFunction(() => S && S.onb);
+  await p.evaluate(() => { S.onb.done = true; save(); });
+  await p.reload(); await p.waitForSelector('#boot', { state: 'detached', timeout: 3000 });
+  assert.equal(await p.locator('.wl').count(), 0);
+  assert.ok(await p.isVisible('nav,[data-act=who]'));
 }));
