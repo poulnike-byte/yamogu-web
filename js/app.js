@@ -279,12 +279,19 @@ function render(){
   }
   const nav=(id,ic,l,lab)=>`<button data-tab="${id}" class="${tab===id?'on':''}" aria-label="${lab||l}${tab===id?', выбрано':''}">${navIcon(ic,tab===id)}${l}</button>`;
   $app.innerHTML=`<main>${({home:viewTasks,goals:viewGoals,route:viewRoute,progress:viewProgress,wishes:viewRewards,parent:viewParent}[tab]||viewRoute)()}</main>
-  <nav>${nav('home','home','Главная')}${nav('goals','star','Мои цели')}${nav('route','check','Маршрут')}${nav('progress','bars','Прогресс')}${nav('wishes','cart','Желания','Мои желания')}</nav>`;
+  ${parentNav()||`<nav>${nav('home','home','Главная')}${nav('goals','star','Мои цели')}${nav('route','check','Маршрут')}${nav('progress','bars','Прогресс')}${nav('wishes','cart','Желания','Мои желания')}</nav>`}`;
   if(tab==='route'&&routeFocus){routeFocus=false;const c=$app.querySelector('.rnode.cur');if(c){const b=c.getBoundingClientRect();window.scrollBy(0,b.top+b.height/2-innerHeight*0.42)}}
   else if(tab!=='route'&&tabChanged){window.scrollTo(0,0)}
   tabChanged=false;
 }
 
+// Родительская навигация (только в открытом кабинете): Семья / Задания / Прогресс / Настройки. Выход в детский режим — «Выйти из кабинета» на главной кабинета.
+function parentNav(){
+  if(tab!=='parent'||!unlocked||introOpen)return'';
+  const cur={hub:'hub',review:'hub',goals:'report',wishes:'hub',tasks:'tasks',report:'report',settings:'settings'}[parentPage]||'hub';
+  const b=(id,img,l)=>`<button data-act="pn" data-id="${id}" class="${cur===id?'on':''}" aria-label="${l}${cur===id?', выбрано':''}" aria-current="${cur===id?'page':'false'}"><img src="img/${img}.png" alt="">${l}</button>`;
+  return `<nav class="pnav" aria-label="Кабинет родителя">${b('hub','ref_nav_home','Семья')}${b('tasks','ref_task_bag','Задания')}${b('report','ref_nav_bars','Прогресс')}${b('settings','ref_nav_menu','Настройки')}</nav>`;
+}
 const navIcon=(ic,on)=>ic==='cart'
   ?`<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" style="display:block;margin:0 auto 2px"><path fill="${on?COL.blue:COL.iconOff2}" d="M6.4,7.2H21.4L19.1,15.4H8.6Z"/>${on?`<path fill="${COL.gold}" d="M8.4,9.2H19.2L18.3,12.4H9.3Z"/>`:''}<path fill="none" stroke="${on?COL.blue:COL.iconOff}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5,3.4H5.2L8.3,17.2H19.6"/><circle cx="10.5" cy="18.5" r="1.8" fill="${on?COL.ink:COL.iconOff}"/><circle cx="18.5" cy="18.5" r="1.8" fill="${on?COL.ink:COL.iconOff}"/></svg>`
   :ic==='check'?`<img src="img/ref_stat_check.png" alt="" style="${on?'':'filter:grayscale(1);opacity:.55'}">`
@@ -426,7 +433,7 @@ document.addEventListener('click',async e=>{
   else if(act==='delgoal'){const g=K().goals.find(x=>x.id===id);if(g){g.status='ARCHIVED';save();toast('Цель убрана')}}   // архив: история недель сохраняется
   else if(act==='delwish'){const k=K();k.wishes=k.wishes.filter(x=>x.id!==id);if(k.goal===id)k.goal=null;save()}
   else if(act==='sound'){S.sound=S.sound===false;save()}   // родитель включает и выключает звук наград
-  else if(act==='pp'){parentPage=id;tabChanged=true}
+  else if(act==='pp'||act==='pn'){parentPage=id;introOpen=false;tabChanged=true}
   else if(act==='editkid'){return kidForm()}
   else if(act==='chpin'){return pinForm()}
   else if(act==='help'){return helpDialog()}

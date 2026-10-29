@@ -112,3 +112,22 @@ label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bot
 .gear{color:var(--ink)}.gear .ico,.go .ico{width:22px;height:22px;vertical-align:middle}
 .big .ico{width:1em;height:1em;vertical-align:-.12em}
 .card .ico,.tx h3 .ico{vertical-align:-.18em}
+
+/* Кабинет родителя: «Моя семья» (макет v2) */
+.kids{overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:4px}
+.pkid{flex:1 0 150px;display:flex;align-items:center;gap:10px;text-align:left;min-height:64px;border:3px solid transparent;border-radius:20px;background:var(--white);padding:8px 10px;font:inherit;color:var(--ink);scroll-snap-align:start;box-shadow:0 4px 12px rgba(var(--ink-rgb),.08)}
+.pkid img{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:top;flex:none}
+.pkid .nm{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere}.pkid .nm b{font-size:16px}
+.pkid .sel{font-size:13px;font-weight:800;color:var(--green-dark)}.pkid.on{border-color:var(--green)}
+.revbox{display:flex;align-items:center;gap:12px;border-radius:26px;padding:16px;margin-bottom:12px;background:linear-gradient(135deg,#CFE4FF,#A9CCFF);box-shadow:0 6px 16px rgba(var(--ink-rgb),.1)}
+.revbox.calm{background:linear-gradient(135deg,#E1F2FF,#CDE6FF)}
+.revbox .rt{flex:1;min-width:0}.revbox h2{margin:2px 0;font-size:24px;color:#0F1F66}
+.btn.white{background:var(--white);color:var(--blue-text);box-shadow:0 4px 10px rgba(var(--ink-rgb),.12);min-height:48px;min-width:48px;padding:0 18px}
+.trow{align-items:center}.trow .tmain{flex:1;display:flex;align-items:center;gap:12px;min-height:48px;cursor:pointer;min-width:0}
+.trow .btn,.bkrow .btn{min-height:48px;flex:none}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.gtile{border-radius:22px;padding:12px;min-height:112px;cursor:pointer;box-shadow:0 6px 16px rgba(var(--ink-rgb),.08)}
+.gtile img{width:38px;height:38px;display:block;margin-bottom:6px;object-fit:contain}.gtile h3{margin:0;font-size:17px}.gtile .small{font-size:13px;margin-top:2px}
+@media (max-width:340px){.g2{grid-template-columns:1fr}}
+nav.pnav button img{filter:grayscale(1);opacity:.55}nav.pnav button.on img{filter:none;opacity:1}
+@media (prefers-reduced-motion:no-preference){.pkid,.gtile,.revbox .btn{transition:transform .15s ease,border-color .15s ease}.gtile:active,.pkid:active{transform:scale(.98)}}

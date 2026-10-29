@@ -44,6 +44,8 @@ async function session(fn) {
 // После перезапуска выбранный ребёнок сохраняется — тогда экран выбора не показывается
 const asKirill = async p => { await p.waitForFunction(() => S.onb); await p.evaluate(() => { if (!S.onb.done) { S.onb.done = true; save(); render(); } });   // онбординг проверяется отдельным тестом
   await p.waitForSelector('nav,[data-act=who]'); if (await p.isVisible('[data-act=who][data-id=kirill]')) await p.click('[data-act=who][data-id=kirill]'); await p.waitForSelector('nav'); };
+// Из кабинета в детский режим — только через «Выйти из кабинета» (в родительской навигации четыре пункта по спецификации)
+const kidMode = async p => { if (await p.isVisible('[data-act=pn][data-id=hub]')) { await p.click('[data-act=pn][data-id=hub]'); await p.click('[data-act=lock]'); } };
 const toParent = async (p, pin, page) => {
   await p.click('[data-tab=home]'); await p.click('[data-act=toparent]');
   await p.fill('#pin', pin); await p.click('[data-act=newpin],[data-act=unlock]');
@@ -77,7 +79,7 @@ test('Задание: ребёнок отправляет, родитель по
   let p = s.page; await asKirill(p); await toParent(p, '2468', 'tasks');
   await p.click('[data-act=addtask]'); await p.fill('#f-t', 'Собрать портфель'); await p.fill('#f-c', '20'); await p.fill('#f-x', '10');
   await p.selectOption('#f-s', '+Самоорганизация'); await p.click('#f-ok');
-  await p.click('[data-tab=home]'); await p.click('[data-act=submit]');
+  await kidMode(p); await p.click('[data-tab=home]'); await p.click('[data-act=submit]');
   await p.click('[data-act=toparent]'); await p.fill('#pin', '2468'); await p.click('[data-act=unlock]'); await exitIntro(p); await p.click('[data-act=pp][data-id=review]');
   await p.click('[data-act=review]');
   assert.ok(await p.isDisabled('#rv-ok'), 'без выбора помощи подтвердить нельзя');
@@ -103,7 +105,7 @@ test('Цели: ставятся, считаются по подтверждён
   assert.equal(await p.evaluate(() => K().goals.length), 0);
   await p.fill('#g-t', 'Рюкзак с вечера'); await p.fill('#g-n', '2'); await p.click('#g-ok');
   await p.evaluate(() => { for (let i = 0; i < 2; i++) { K().tasks.push({ id: 'z' + i, title: 'З', desc: '', coins: 1, xp: 1, status: 'AVAILABLE' }); submit('z' + i); approve('z' + i, 'INDEPENDENT'); } });
-  await p.click('[data-tab=goals]'); await p.waitForSelector('text=Цель недели достигнута');
+  await kidMode(p); await p.click('[data-tab=goals]'); await p.waitForSelector('text=Цель недели достигнута');
 }));
 
 test('Прогресс: неделя по дням, навыки, достижения', async () => session(async s => {
@@ -159,7 +161,7 @@ test('Желания: покупка с подтверждением, цель, 
   assert.deepEqual(await p.evaluate(() => K().wishes.map(w => [w.title, w.price])), [['Кино', 300], ['Выбрать мультфильм на вечер', 150]]);
   await p.evaluate(() => { K().coins = 500; });
   // ребёнок: покупка через подтверждение
-  await p.click('[data-tab=wishes]');
+  await kidMode(p); await p.click('[data-tab=wishes]');
   await p.locator('[data-act=wishbuy]').first().click();
   assert.ok(await p.isVisible('text=Купить «Кино»?'));
   await p.click('#by-no'); assert.equal(await p.evaluate(() => K().purchases.length), 0, '«Не сейчас» ничего не покупает');
@@ -170,7 +172,7 @@ test('Желания: покупка с подтверждением, цель, 
   assert.equal(await p.evaluate(() => K().purchases.length), 1, 'открытая покупка по желанию только одна');
   // цель
   await p.locator('[data-act=wishgoal]').nth(1).click();
-  await p.click('[data-tab=home]'); assert.ok(await p.isVisible('text=Моя цель: Выбрать мультфильм на вечер'));
+  await kidMode(p); await p.click('[data-tab=home]'); assert.ok(await p.isVisible('text=Моя цель: Выбрать мультфильм на вечер'));
   // родитель: отложить с причиной, ребёнок видит причину, потом выдать
   await p.click('[data-act=toparent]'); await p.fill('#pin', '2468'); await p.click('[data-act=unlock]'); await exitIntro(p); await p.click('[data-act=pp][data-id=wishes]');
   await p.evaluate(() => { K().purchases[0].at = addDays(dayStr(), -8); render(); });
@@ -227,9 +229,9 @@ test('Онбординг не прерывает тех, у кого уже ес
 
 test('Кабинет родителя: плитки, переходы, профиль, смена PIN, помощь, возврат на главную страницу кабинета', async () => session(async s => {
   let p = s.page; await asKirill(p); await toParent(p, '2468');
-  for (const t of ['Моя семья', 'На проверке', 'Задания', 'Прогресс и помощь', 'Цели', 'Желания', 'Настройки']) assert.ok(await p.isVisible(`text=${t}`), t);
+  for (const t of ['Моя семья', 'На проверке', 'Задания', 'Расписание и повторы', 'Прогресс', 'Цели', 'Желания', 'О семье', 'Копия данных']) assert.ok(await p.isVisible(`text=${t}`), t);
   await p.evaluate(() => { K().tasks.push({ id: 'h1', title: 'Х', desc: '', coins: 1, xp: 1, status: 'AVAILABLE' }); submit('h1'); render(); });
-  assert.ok(await p.isVisible('text=ждут проверки: 1'), 'на плитке виден счётчик');
+  assert.ok(await p.isVisible('text=1 задание'), 'в блоке проверки виден счётчик');
   // разделы открываются и возвращаются кнопкой «Кабинет родителя»
   for (const [pg, mark] of [['review', 'Ожидают проверки'], ['tasks', '+ Своё'], ['report', 'Отчёт'], ['goals', '+ Цель'], ['wishes', 'Желания ребёнка']]) {
     await p.click(`[data-act=pp][data-id=${pg}]`); assert.ok(await p.isVisible(`text=${mark}`), pg);
@@ -265,7 +267,7 @@ test('Украшения карты: покупка, «Надеть», дост�
   await p.evaluate(() => { submit('z1'); approve('z1', 'INDEPENDENT'); });
   assert.equal(await p.evaluate(() => decoOwns(K(), decoById('ring_gold'))), true, 'все задания дня подтверждены = вершина достигнута');
   // покупка через экран: «Хочу» → подтверждение → куплено и надето, баланс уменьшился
-  await p.click('[data-tab=wishes]'); await p.click('[data-act=wp][data-id=decor]');
+  await kidMode(p); await p.click('[data-tab=wishes]'); await p.click('[data-act=wp][data-id=decor]');
   assert.ok(await p.isVisible('text=У тебя свободно: 150 монет'));
   await p.click('[data-act=decobuy][data-id=flag_blue]'); assert.ok(await p.isVisible('text=Купить «Синий флаг»?'));
   await p.click('#dy-no'); assert.equal(await p.evaluate(() => K().deco.bought.length), 0);

@@ -1,6 +1,6 @@
 'use strict';
 // Кабинет родителя (порт renderParentHub / настроек из Android): «Моя семья» — дети карточками, затем разделы-плитки.
-// Разделы: На проверке, Задания, Прогресс и помощь, Цели, Желания, Знакомство, Настройки. PIN вводится один раз при входе в кабинет.
+// Разделы (макет v2): На проверке, Задания, Прогресс, Цели, Желания, О семье, Настройки; внизу — родительская навигация. Прежний список: На проверке, Задания, Прогресс и помощь, Цели, Желания, Знакомство, Настройки. PIN вводится один раз при входе в кабинет.
 let parentPage='hub';   // hub | review | tasks | report | goals | wishes | settings
 const PAGE_T={review:'На проверке',tasks:'Задания',report:'Прогресс и помощь',goals:'Цели',wishes:'Желания',settings:'Настройки'};
 const ageT=a=>a+' '+plural(a,'год','года','лет');
@@ -18,16 +18,23 @@ function viewParent(){
   const back='<button class="btn sm soft" data-act="pp" data-id="hub" style="margin-bottom:8px" aria-label="Назад в кабинет родителя">‹ Кабинет родителя</button>';
   return `${back}<div class="top"><div class="hello"><b>${PAGE_T[parentPage]}</b>${kinfo().name}</div></div>`+({review:pageReview,tasks:pageTasks,report:pageReport,goals:pageGoals,wishes:pageWishes,settings:pageSettings}[parentPage]||pageReview)(k);
 }
+// Главная кабинета «Моя семья» (макет v2): заголовок с настройками, выбор ребёнка, блок проверки, «Задания» + «Создать», сетка 2×2, копия данных.
+// Счётчик проверки — по выбранному ребёнку (очередь у каждого своя), поэтому подписан его именем. Все разделы и вложенные функции прежние.
+const chev='<span style="font-size:26px;font-weight:800;color:var(--blue)" aria-hidden="true">›</span>';
+const gtile=(attrs,img,title,note,i)=>`<div class="gtile c${i}" ${attrs} role="button" tabindex="0" aria-label="${title}${note?'. '+note:''}"><img src="img/${img}.png" alt=""><h3>${title}</h3><div class="small">${note}</div></div>`;
 function parentHub(k){
-  const wa=k.tasks.filter(t=>t.status==='WAITING_APPROVAL').length,pd=k.purchases.filter(isOpenP),late=pd.filter(p=>waitDays(p)>=OVERDUE_DAYS).length;
-  let h=`<div class="top"><div class="hello">Кабинет родителя<b>Моя семья</b></div></div>
-  <div class="kids">${KIDS.map(x=>{const a=S.kids[x.id].age;return`<button class="kid ${x.id===S.cur?'on':''}" data-act="who" data-id="${x.id}" data-stay="1" aria-label="${x.name}${a?', '+ageT(a):''}${x.id===S.cur?', выбрано':''}"><img src="${x.img}" alt="">${x.name}${a?`<span class="small" style="display:block;font-weight:400">${ageT(a)}</span>`:''}</button>`}).join('')}</div>`;
-  h+=backupNag()+tile('review','ref_stat_check','На проверке',wa?'ждут проверки: '+wa:'',0)+tile('tasks','ref_task_bag','Задания','назначить, расписание и повторы',1)
-    +tile('report','ref_nav_bars','Прогресс и помощь','отчёты по неделям, навыки',2)+tile('goals','ref_stat_target','Цели','недельные цели',3)
-    +tile('wishes','ref_stat_star','Желания',pd.length?(late?`ждут выдачи: ${pd.length}, давно: ${late}`:'ждут выдачи: '+pd.length):'награды, которые ребёнок копит',4)
-    +`<div class="task c0" data-act="i_open" role="button" tabindex="0" style="cursor:pointer"><img class="ic" src="img/ref_skill_book.png" alt=""><div class="tx"><h3>${S.intro.done?'Знакомство: пройти заново':'Знакомство с семьёй'}</h3><div class="small">о семье, как мы благодарим, желания ребёнка</div></div><span style="font-size:26px;font-weight:800;color:var(--blue)" aria-hidden="true">›</span></div>`
-    +tile('settings','ref_nav_menu','Настройки','профиль, PIN, звук, помощь, данные',1)
-    +'<button class="btn full soft" data-act="lock" style="margin-top:6px">Выйти из кабинета</button>';
+  const wa=k.tasks.filter(t=>t.status==='WAITING_APPROVAL').length,pd=k.purchases.filter(isOpenP),late=pd.filter(p=>waitDays(p)>=OVERDUE_DAYS).length,name=kinfo().name;
+  const d=daysSinceBackup();
+  let h=`<div class="top"><div class="hello">Кабинет родителя<b>Моя семья</b></div><button class="gear" data-act="pp" data-id="settings" aria-label="Настройки" style="width:48px;height:48px"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg></button></div>
+  <div class="kids" role="group" aria-label="Выбор ребёнка">${KIDS.map(x=>{const a=S.kids[x.id].age,on=x.id===S.cur;return`<button class="pkid${on?' on':''}" data-act="who" data-id="${x.id}" data-stay="1" aria-pressed="${on}" aria-label="${x.name}${a?', '+ageT(a):''}${on?', выбрано':''}"><img src="${x.img}" alt=""><span class="nm"><b>${x.name}</b>${a?`<span class="small">${ageT(a)}</span>`:''}${on?'<span class="sel">✓ Выбран</span>':''}</span></button>`}).join('')}</div>`;
+  h+=backupNag();
+  h+=wa?`<div class="revbox"><div class="rt"><div class="small" style="color:#27407F">На проверке · ${esc(name)}</div><h2>${wa} ${plural(wa,'задание','задания','заданий')}</h2><div class="small" style="color:#27407F">ждут вашего решения</div></div><button class="btn sm white" data-act="pp" data-id="review">Проверить</button></div>`
+    :`<div class="revbox calm"><div class="rt"><div class="small" style="color:#27407F">На проверке · ${esc(name)}</div><h2>Всё проверено</h2></div><button class="btn sm white" data-act="pp" data-id="review">Открыть</button></div>`;
+  h+=`<div class="task c1 trow"><div class="tmain" data-act="pp" data-id="tasks" role="button" tabindex="0" aria-label="Задания. Расписание и повторы"><img class="ic" src="img/ref_task_bag.png" alt=""><div class="tx"><h3>Задания</h3><div class="small">Расписание и повторы</div></div></div><button class="btn sm" data-act="addtask">Создать</button></div>`;
+  h+=`<div class="g2">${gtile('data-act="pp" data-id="report"','ref_nav_bars','Прогресс','отчёты и помощь',2)}${gtile('data-act="pp" data-id="goals"','ref_stat_target','Цели','недельные цели',3)}
+   ${gtile('data-act="pp" data-id="wishes"','ref_stat_star','Желания',pd.length?(late?`ждут выдачи: ${pd.length}, давно: ${late}`:'ждут выдачи: '+pd.length):'награды, которые копит ребёнок',4)}${gtile('data-act="i_open"','ref_skill_book','О семье',S.intro.done?'знакомство и договорённости':'пройти знакомство',0)}</div>`;
+  h+=`<div class="task c0 bkrow"><svg viewBox="0 0 24 24" width="36" height="36" aria-hidden="true" style="flex:none"><path fill="none" stroke="${COL.blue}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" d="M6 2.8h8l4.2 4.2V20a1.2 1.2 0 0 1-1.2 1.2H6A1.2 1.2 0 0 1 4.8 20V4A1.2 1.2 0 0 1 6 2.8zM14 2.8V7h4.2M12 10.5v6M9.5 14.2l2.5 2.5 2.5-2.5"/></svg><div class="tx"><h3>Копия данных</h3><div class="small">${S.lastBackup?'последняя: '+S.lastBackup.split('-').reverse().join('.'):'копия ещё не делалась'} · файл на этом телефоне</div></div><button class="btn sm soft" data-act="backup">Сохранить</button></div>
+   <button class="btn full soft" data-act="lock" style="margin-top:6px">Выйти из кабинета</button>`;
   return h;
 }
 function pageReview(k){
