@@ -201,3 +201,16 @@ html.onboarding,html.app-starting{background-color:#E0F9FD;background-image:line
 
 /* v43: clear sky reaches the top; controls and lower panel retain their layout. */
 .wl{background-color:#E0F9FD}.wl>.wl-bg{object-position:50% 0%}
+
+/* v44: illustrated sandstone action in the landscape. */
+.wl-actions{background:none;padding:12px 22px calc(12px + env(safe-area-inset-bottom));gap:0}
+.wl-benefit{max-width:340px;margin:0 auto 8px;font-size:clamp(18px,5vw,22px);line-height:1.28;color:#49351F;text-shadow:0 1px 0 #fff3d6,0 0 12px #fff0cc;font-weight:750;text-wrap:balance}
+.wl .btn.full.wl-start{display:grid;place-items:center;width:min(100%,370px);height:108px;min-height:88px;padding:0 20px 13px;border:0;border-radius:22px;background:transparent url('../img/start_step_v44.png') center/100% 100% no-repeat;box-shadow:none;color:#4C3018;line-height:1.1;font-family:inherit;font-size:29px;font-weight:800;letter-spacing:.2px;text-shadow:0 1px 0 #FFF2CD;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;animation:step-invite 4.6s ease-in-out 1.5s infinite}
+.wl .btn.full.wl-start:active{animation:none;transform:translateY(4px) scale(.985)}
+.wl .btn.full.wl-start:focus-visible{outline:3px solid #68401D;outline-offset:3px}
+.wl-parent{color:#49351F;margin-top:2px;font-weight:700;text-shadow:0 1px 4px #fff0cc;min-height:44px}
+@keyframes step-invite{0%,68%,100%{transform:translateY(0)}78%{transform:translateY(-4px)}88%{transform:translateY(0)}}
+@media(max-height:700px){.wl-gap{min-height:140px}.wl-actions{padding-top:8px}.wl-benefit{font-size:18px;margin-bottom:4px}.wl .btn.full.wl-start{height:94px}.wl-parent{margin-top:0}}
+@media(prefers-reduced-motion:reduce){.wl .btn.full.wl-start{animation:none;transition:none}}
+
+@media(max-height:700px){.wl-col{min-height:780px}.wl>.wl-bg{position:absolute;height:780px}.wl-benefit{max-width:320px}}
