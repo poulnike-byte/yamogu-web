@@ -258,7 +258,7 @@ test('Украшения карты: покупка, «Надеть», дост�
   let p = s.page; await asKirill(p);
   // по умолчанию надеты бесплатные
   assert.deepEqual(await p.evaluate(() => ['FLAG', 'TRAIL', 'TREES', 'RING'].map(sl => decoWorn(K(), sl).id)), ['flag_red', 'trail_sand', 'trees_round', 'ring_white']);
-  // достижения: 1 монета — флаг со звездой; 200 монет — лесная тропа; вершина — золотая рамка
+  // достижения: 1 монета — жёлтый флаг; 200 монет — лесная тропа; вершина — жёлтая рамка
   assert.deepEqual(await p.evaluate(() => [decoOwns(K(), decoById('flag_star')), decoOwns(K(), decoById('trail_green')), decoOwns(K(), decoById('ring_gold'))]), [false, false, false]);
   await p.evaluate(() => { K().coins = 150; K().tasks.push({ id: 'z1', date: dayStr(), title: 'Т', desc: '', coins: 0, xp: 0, status: 'AVAILABLE' }); });
   assert.deepEqual(await p.evaluate(() => [decoOwns(K(), decoById('flag_star')), decoOwns(K(), decoById('trail_green'))]), [true, false]);

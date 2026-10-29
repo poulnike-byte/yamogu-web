@@ -12,8 +12,8 @@ const PRICE={COMMON:100,SPECIAL:250,ELITE:500,PREMIUM:800},REFUND_MS=24*60*60*10
 const DECO=[
  {id:'flag_red',t:'Красный флаг',slot:'FLAG',r:'COMMON',way:'D'},
  {id:'flag_blue',t:'Синий флаг',slot:'FLAG',r:'COMMON',way:PRICE.COMMON},
- {id:'flag_star',t:'Флаг со звездой',slot:'FLAG',r:'SPECIAL',way:'FIRST_TASK'},
- {id:'flag_flower',t:'Цветочный флаг',slot:'FLAG',r:'ELITE',way:PRICE.ELITE},
+ {id:'flag_star',t:'Жёлтый флаг с цветком',slot:'FLAG',r:'SPECIAL',way:'FIRST_TASK'},
+ {id:'flag_flower',t:'Зелёный флаг с цветком',slot:'FLAG',r:'ELITE',way:PRICE.ELITE},
  {id:'trail_sand',t:'Песчаная дорожка',slot:'TRAIL',r:'COMMON',way:'D'},
  {id:'trail_stone',t:'Каменная дорожка',slot:'TRAIL',r:'COMMON',way:PRICE.COMMON},
  {id:'trail_green',t:'Лесная тропа',slot:'TRAIL',r:'SPECIAL',way:'COINS_200'},
@@ -24,8 +24,8 @@ const DECO=[
  {id:'trees_autumn',t:'Осенние деревья',slot:'TREES',r:'SPECIAL',way:PRICE.SPECIAL},
  {id:'ring_white',t:'Белая рамка',slot:'RING',r:'COMMON',way:'D'},
  {id:'ring_blue',t:'Синяя рамка',slot:'RING',r:'COMMON',way:PRICE.COMMON},
- {id:'ring_gold',t:'Золотая рамка',slot:'RING',r:'SPECIAL',way:'SUMMIT'},
- {id:'ring_rainbow',t:'Радужная рамка',slot:'RING',r:'PREMIUM',way:PRICE.PREMIUM}];
+ {id:'ring_gold',t:'Жёлтая рамка с цветами',slot:'RING',r:'SPECIAL',way:'SUMMIT'},
+ {id:'ring_rainbow',t:'Мятная рамка с цветами',slot:'RING',r:'PREMIUM',way:PRICE.PREMIUM}];
 const decoById=id=>DECO.find(x=>x.id===id);
 const decoDefault=slot=>DECO.find(x=>x.slot===slot&&x.way==='D');
 const decoImg=id=>'img/decor/'+id+'.png';
