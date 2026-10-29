@@ -192,3 +192,7 @@ body.onboarding{background-color:var(--paper);min-height:100%;min-height:100dvh}
 body.onboarding #app{padding-top:0;max-width:none}
 .wl-col{min-height:100%;min-height:100dvh}
 @media(prefers-reduced-motion:reduce){#boot{transition:none}}
+
+/* Blend the illustration into the system sky color without moving controls. */
+.wl::before{content:"";position:fixed;inset:0 0 auto;height:calc(90px + env(safe-area-inset-top,0px));background:linear-gradient(to bottom,var(--sky-bg) 0%,rgba(207,232,251,.9) 24%,rgba(207,232,251,0) 100%);pointer-events:none;z-index:0}
+.wl-col{z-index:1}
