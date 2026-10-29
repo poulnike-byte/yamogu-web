@@ -35,7 +35,7 @@ function roadAt(f){   // точка на дороге: f от 0 (старт) д�
   return{x:a[0]+(b[0]-a[0])*f2,y:a[1]+(b[1]-a[1])*f2};
 }
 // Доли пути для n заданий: от начала дороги к финишу, один узел — ближе к началу
-const routeFracs=n=>n===1?[.3]:Array.from({length:n},(_,i)=>.09+.74*i/(n-1));
+const routeFracs=n=>n===1?[.4]:Array.from({length:n},(_,i)=>.19+.65*i/(n-1));
 
 let sparkAt={};   // ребёнок → доля пути, где огонёк был нарисован в прошлый раз (чтобы он «прошёл» путь после подтверждения)
 const reduceMotion=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -47,39 +47,53 @@ function animateSpark(from,to){
   requestAnimationFrame(step);
 }
 
-function viewRoute(){
+// Размеры точки и подписи в единицах фона зависят от числа заданий
+const routeSizes=n=>({SZ:n<=6?150:n<=9?125:100,FS:n<=6?27:n<=9?24:21});
+
+// Содержимое слоя маршрута (точки, флаг, огонёк, герой). Лежит в общем слое долины (valley.js) в координатах фона 853×1844 с тем же cover-преобразованием,
+// что у картинок, поэтому точки всегда совпадают с дорогой. Здесь же — прозрачная область нажатия 48×48 (в экранных пикселях) у каждой точки.
+function routeLayerHtml(){
   const k=K(),ki=kinfo(),nodes=routeNodes(k),n=nodes.length,look=decoLook(k);
-  const allDone=n>0&&nodes.every(x=>x.state==='DONE');
-  const doneN=nodes.filter(x=>x.state==='DONE').length;
-  let h=`<div class="top"><button class="gear" data-act="switch" title="Сменить ребёнка">‹</button>
-    <div class="hello"><b>Мой маршрут</b>${ki.name} · сделано ${doneN} из ${n}</div>
-    <div class="wallet"><img src="img/skill_money.png" alt="">${avail(k)}</div></div>`;
-  if(!n)return h+`<div class="card"><b>На сегодня заданий пока нет</b><p class="muted" style="margin:4px 0 0">Попроси родителя добавить первое задание.</p></div>
-    <button class="btn full" data-act="toparent">Добавить задачу</button>`;
-  const fr=routeFracs(n),pos=i=>roadAt(fr[i]),end=roadAt(1);
-  const SZ=n<=6?150:n<=9?125:100,FS=n<=6?27:n<=9?24:21;   // размер точки и подписи в единицах фона
+  if(!n)return '';
+  const allDone=nodes.every(x=>x.state==='DONE');
+  const fr=routeFracs(n),pos=i=>roadAt(fr[i]),end=roadAt(1),{SZ,FS}=routeSizes(n);
   const sprite={DONE:'done',WAIT:'wait',CUR:'cur',OPEN:'open'};
-  let svg=`<svg class="route" viewBox="0 0 ${RW} ${RH}" width="100%" role="img" aria-label="Тропа по долине: ${n} заданий"><image href="img/route/route_bg.jpg" width="${RW}" height="${RH}" aria-hidden="true"/>`;
-  // финиш: надетый флаг на конце дороги; пока не всё сделано — приглушён
-  svg+=`<g opacity="${allDone?1:.75}">${allDone?`<circle cx="${end.x}" cy="${end.y-40}" r="120" fill="#FFE98A" opacity=".45"/>`:''}<image href="${look.flag}" x="${end.x-60}" y="${end.y-215}" width="120" height="240" aria-hidden="true"/></g>`;
+  let svg=`<g opacity="${allDone?1:.75}">${allDone?`<circle cx="${end.x}" cy="${end.y-40}" r="120" fill="#FFE98A" opacity=".45"/>`:''}<image href="${look.flag}" x="${end.x-60}" y="${end.y-215}" width="120" height="240" aria-hidden="true"/></g>`;
   nodes.forEach((x,i)=>{const p=pos(i);
     svg+=`<g class="rnode${x.state==='CUR'?' cur':''}" data-act="rnode" data-id="${x.t.id}" transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)})" tabindex="0" role="button" aria-label="${esc(x.t.title)}">
-      ${x.state==='CUR'?`<circle class="pulse" r="${SZ*.62}" fill="#FFE98A" opacity=".55"/>`:''}<circle r="${SZ*.62}" fill="transparent"/>
+      ${x.state==='CUR'?`<circle class="pulse" r="${SZ*.62}" fill="#FFE98A" opacity=".55"/>`:''}<circle r="${Math.max(SZ*.62,48/valleyScale())}" fill="transparent"/>
       <image href="img/route/${sprite[x.state]}.png" x="${-SZ/2}" y="${-SZ/2}" width="${SZ}" height="${SZ}" aria-hidden="true"/>
       <text y="${SZ*.5+FS+6}" text-anchor="middle" font-size="${FS}" font-weight="800" fill="${COL.ink}" stroke="#fff" stroke-width="${FS*.3}" paint-order="stroke">${esc(x.t.title.length>20?x.t.title.slice(0,19)+'…':x.t.title)}</text></g>`});
-  // огонёк продвижения: стоит на дороге между последним выполненным заданием и следующим (или у начала дороги), после подтверждения проходит путь до следующего
+  // огонёк продвижения: на дороге между последним выполненным заданием и следующим (или у начала дороги); после подтверждения проходит путь
   const lastDone=nodes.reduce((m,x,i)=>x.state==='DONE'?i:m,-1),sf=lastDone<0?.02:(fr[lastDone]+(fr[lastDone+1]!==undefined?fr[lastDone+1]:1))/2,sp=roadAt(sf);
   const prev=sparkAt[S.cur];sparkAt[S.cur]=sf;
   svg+=`<g id="rspark" transform="translate(${sp.x.toFixed(1)},${sp.y.toFixed(1)})" aria-hidden="true" pointer-events="none"><image href="img/route/spark.png" x="-45" y="-45" width="90" height="90"/></g>`;
   if(prev!==undefined&&prev<sf)setTimeout(()=>animateSpark(prev,sf),60);
-  // герой в надетой рамке рядом с текущим узлом
   const ci=nodes.findIndex(x=>x.state==='CUR'); if(ci>=0){const p=pos(ci),side=p.x>RW/2?-1:1,cx=p.x+side*(SZ*.5+80),cy=p.y,R=72;
     svg+=`<g aria-hidden="true" pointer-events="none"><defs><clipPath id="herocl"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath></defs><circle cx="${cx}" cy="${cy}" r="${R}" fill="${COL.white}"/>
       <image href="${ki.img}" x="${cx-R*1.15}" y="${cy-R*1.2}" width="${R*2.3}" height="${R*2.7}" preserveAspectRatio="xMidYMin slice" clip-path="url(#herocl)"/><image href="${look.ring}" x="${cx-R*1.3}" y="${cy-R*1.3}" width="${R*2.6}" height="${R*2.6}"/></g>`}
-  svg+='</svg>';
-  return h+`<div class="routewrap">${svg}</div>
+  return svg;
+}
+// Точка, которую при входе в маршрут нужно показать (текущее задание, иначе первое ожидающее/последнее выполненное): координаты на фоне
+function routeFocusPoint(){
+  const nodes=routeNodes(K());if(!nodes.length)return null;
+  let i=nodes.findIndex(x=>x.state==='CUR');if(i<0)i=nodes.findIndex(x=>x.state==='WAIT');if(i<0)i=nodes.length-1;
+  return roadAt(routeFracs(nodes.length)[i]);
+}
+
+// Страница «Маршрут»: заголовок и нижние карточки — обычный интерфейс; сама карта — слой долины под ним, она не прокручивается страницей.
+function viewRoute(){
+  const k=K(),ki=kinfo(),nodes=routeNodes(k),n=nodes.length;
+  const allDone=n>0&&nodes.every(x=>x.state==='DONE');
+  const doneN=nodes.filter(x=>x.state==='DONE').length;
+  const head=`<div class="top"><button class="gear" data-act="switch" title="Сменить ребёнка">‹</button>
+    <div class="hello"><b>Мой маршрут</b>${ki.name} · сделано ${doneN} из ${n}</div>
+    <div class="wallet"><img src="img/skill_money.png" alt="">${avail(k)}</div></div>`;
+  if(!n)return `<div class="routepage">${head}<div class="spacer"></div><div class="card"><b>На сегодня заданий пока нет</b><p class="muted" style="margin:4px 0 0">Попроси родителя добавить первое задание.</p></div>
+    <button class="btn full" data-act="toparent">Добавить задачу</button></div>`;
+  return `<div class="routepage">${head}<div class="spacer"></div>
     ${allDone?'<div class="card c2"><b>Все задания выполнены!</b><div class="small">Монеты начислит родитель после проверки.</div></div>':''}
-    <button class="btn full" data-act="toparent" style="margin-top:6px">Добавить задачу</button>`;
+    <button class="btn full" data-act="toparent">Добавить задачу</button></div>`;
 }
 
 // Окно задания с маршрута: «Я сделал!» только отправляет родителю, награды не начисляет.

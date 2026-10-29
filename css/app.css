@@ -1,7 +1,7 @@
 :root{
   /* ===== ЦВЕТА ЯмогУ! — единственное место, где они записаны. Меняйте здесь: изменится везде (в том числе в иконках и графиках). ===== */
   /* Текст и фон */
-  --ink:#13206B;--muted:#5B6596;--paper:#FDFAF4;--white:#FFFFFF;--sky-bg:#CFE8FB;
+  --ink:#101C48;--muted:#52657A;--paper:#FDFAF4;--white:#FFFFFF;--sky-bg:#CFE8FB;
   /* Главный синий (кнопки, активное) */
   --blue:#1F6BFF;--blue-light:#3E86FF;--blue-depth:#0D43C4;--blue-text:#1A55F0;--blue-wash:#EAF2FF;--blue-today:#1F3A8A;
   /* Зелёный (успех, подтверждено) */
@@ -26,9 +26,9 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{color:var(--ink);font:16px/1.35 -apple-system,"SF Pro Rounded",system-ui,"Segoe UI",Arial,sans-serif;
-  background:var(--sky-bg) url(../img/ref_bg_today.jpg) center top/cover fixed no-repeat;-webkit-user-select:none;user-select:none;
+  background:#8FD05B;-webkit-user-select:none;user-select:none;
   overscroll-behavior:none}
-#app{max-width:520px;margin:0 auto;min-height:100%;padding-top:env(safe-area-inset-top)}
+#app{max-width:520px;margin:0 auto;min-height:100%;padding-top:env(safe-area-inset-top);position:relative;z-index:1}
 main{padding:10px 16px calc(110px + env(safe-area-inset-bottom))}
 h1,h2,h3{margin:0}
 .top{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
@@ -104,7 +104,7 @@ label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bot
 .big{font-size:44px;font-weight:900;text-align:center}
 
 .wallet{display:flex;align-items:center;gap:6px;background:var(--white);border-radius:999px;padding:6px 14px 6px 8px;font-weight:800;box-shadow:0 4px 12px rgba(var(--ink-rgb),.12)}.wallet img{height:26px}
-.routewrap{margin:4px -4px 8px;border-radius:26px;overflow:hidden;box-shadow:0 8px 22px rgba(var(--ink-rgb),.12)}.route{display:block;overflow:visible}.rnode{cursor:pointer;outline:none}.rnode .pulse{animation:rpulse 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes rpulse{50%{transform:scale(1.18);opacity:.25}}@media (prefers-reduced-motion:reduce){.rnode .pulse{animation:none}}
+.rnode{cursor:pointer;outline:none}.rnode .pulse{animation:rpulse 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes rpulse{50%{transform:scale(1.18);opacity:.25}}@media (prefers-reduced-motion:reduce){.rnode .pulse{animation:none}}
 
 /* Иконки интерфейса (Ionicons, наши PNG наград) */
 .ico{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
@@ -131,3 +131,29 @@ label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bot
 @media (max-width:340px){.g2{grid-template-columns:1fr}}
 nav.pnav button img{filter:grayscale(1);opacity:.55}nav.pnav button.on img{filter:none;opacity:1}
 @media (prefers-reduced-motion:no-preference){.pkid,.gtile,.revbox .btn{transition:transform .15s ease,border-color .15s ease}.gtile:active,.pkid:active{transform:scale(.98)}}
+
+/* Единая долина (valley.js): фон от края до края под всеми страницами */
+#valley{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#8FD05B}
+#vstage{position:absolute;inset:0;transition:transform .35s ease}
+#vstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;opacity:0;user-select:none;-webkit-user-drag:none}
+#valley.ready .vplain{opacity:1}
+#valley .vroad{transition:opacity .28s ease}
+body[data-mode=route] #valley.ready .vroad{opacity:1}
+#routeLayer{position:absolute;inset:0;overflow:visible}
+#routeLayer .rl{opacity:0;transition:opacity .22s ease .14s}#routeLayer .rl.on{opacity:1}
+#routeLayer .rnode{pointer-events:auto}
+#vveil{position:absolute;inset:0;background:rgba(255,255,255,.26);transition:background .28s ease}
+#vveil::before{content:"";position:absolute;left:0;right:0;top:0;height:170px;background:linear-gradient(rgba(255,255,255,.7),rgba(255,255,255,0))}
+body[data-mode=parent] #vveil{background:rgba(255,255,255,.42)}
+body[data-mode=route] #vveil{background:rgba(255,255,255,.05)}
+@media (prefers-reduced-motion:reduce){#vstage,#valley .vroad,#routeLayer .rl,#vveil{transition:none}}
+/* Маршрут: страница — только интерфейс, карта под ней принимает касания в пустых местах */
+body[data-mode=route] #app,body[data-mode=route] main{pointer-events:none}body[data-mode=route] #app nav,body[data-mode=route] .modal{pointer-events:auto}body[data-mode=route] main{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+body[data-mode=route] main .top,body[data-mode=route] main .card,body[data-mode=route] main .btn{pointer-events:auto}
+.routepage{display:flex;flex-direction:column;min-height:calc(100dvh - 130px - env(safe-area-inset-bottom) - env(safe-area-inset-top))}.routepage .spacer{flex:1}
+.routepage .top .hello,.routepage .top .hello b{text-shadow:none}
+.routepage .card{margin-bottom:10px}
+nav{background:rgba(255,255,255,.94)}
+
+@media (max-width:340px){.hello b{font-size:20px}.routepage .top{gap:8px}}
+body[data-mode=route]{touch-action:none}

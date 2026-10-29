@@ -280,8 +280,8 @@ function render(){
   const nav=(id,ic,l,lab)=>`<button data-tab="${id}" class="${tab===id?'on':''}" aria-label="${lab||l}${tab===id?', выбрано':''}">${navIcon(ic,tab===id)}${l}</button>`;
   $app.innerHTML=`<main>${({home:viewTasks,goals:viewGoals,route:viewRoute,progress:viewProgress,wishes:viewRewards,parent:viewParent}[tab]||viewRoute)()}</main>
   ${parentNav()||`<nav>${nav('home','home','Главная')}${nav('goals','star','Мои цели')}${nav('route','check','Маршрут')}${nav('progress','bars','Прогресс')}${nav('wishes','cart','Желания','Мои желания')}</nav>`}`;
-  if(tab==='route'&&routeFocus){routeFocus=false;const c=$app.querySelector('.rnode.cur');if(c){const b=c.getBoundingClientRect();window.scrollBy(0,b.top+b.height/2-innerHeight*0.42)}}
-  else if(tab!=='route'&&tabChanged){window.scrollTo(0,0)}
+  if(typeof syncValley==='function')syncValley();
+  if(tabChanged)window.scrollTo(0,0);
   tabChanged=false;
 }
 
