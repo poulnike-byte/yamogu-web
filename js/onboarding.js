@@ -17,8 +17,8 @@ function onboardView(){
   const back=st>0?'<button class="gear" data-act="ob_back" aria-label="Назад">‹</button>':'';
   if(st===0)return`<div class="wl"><img class="wl-bg" src="img/welcome_background.png" alt="" aria-hidden="true"><main class="wl-col" style="padding-bottom:calc(12px + env(safe-area-inset-bottom))">
     <img class="wl-logo" src="img/yamogu_logo.png" alt="ЯмогУ!"><p class="wl-slogan">Я пробую, я учусь, я могу</p><div class="wl-gap"></div>
-    <p class="wl-benefit">Помогаем ребенку становиться самостоятельнее</p>
-    <button class="btn full" data-act="ob_next">Начать</button><button class="wl-parent" data-act="ob_parent">Я родитель</button></main></div>`;
+    <section class="wl-actions"><p class="wl-benefit">Помогаем ребенку становиться самостоятельнее</p>
+    <button class="btn full" data-act="ob_next">Начать</button><button class="wl-parent" data-act="ob_parent">Я родитель</button></section></main></div>`;
   if(st===1){const ages=obAges(O.child);
     return`<main><div class="top">${back}<div class="hello"><b>Давай познакомимся!</b></div></div>${dots}
     <label>Как тебя зовут?</label><input id="ob-name" maxlength="${OB_NAME_MAX}" placeholder="${kid.name}" value="${esc(O.name)}" autocomplete="off">
