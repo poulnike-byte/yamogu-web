@@ -104,7 +104,7 @@ label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bot
 .big{font-size:44px;font-weight:900;text-align:center}
 
 .wallet{display:flex;align-items:center;gap:6px;background:var(--white);border-radius:999px;padding:6px 14px 6px 8px;font-weight:800;box-shadow:0 4px 12px rgba(var(--ink-rgb),.12)}.wallet img{height:26px}
-.routewrap{margin:4px -4px 8px;border-radius:26px;overflow:hidden;box-shadow:0 8px 22px rgba(var(--ink-rgb),.12)}.route{display:block;overflow:visible}.rnode{cursor:pointer;outline:none}
+.routewrap{margin:4px -4px 8px;border-radius:26px;overflow:hidden;box-shadow:0 8px 22px rgba(var(--ink-rgb),.12)}.route{display:block;overflow:visible}.rnode{cursor:pointer;outline:none}.rnode .pulse{animation:rpulse 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}@keyframes rpulse{50%{transform:scale(1.18);opacity:.25}}@media (prefers-reduced-motion:reduce){.rnode .pulse{animation:none}}
 
 /* Иконки интерфейса (Ionicons, наши PNG наград) */
 .ico{width:1.15em;height:1.15em;vertical-align:-.2em;flex:none}
