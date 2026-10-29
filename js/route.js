@@ -51,11 +51,11 @@ function viewRoute(){
   const pts=[{x:180,y:H0-40},...nodes.map((_,i)=>pos(i)),{x:180,y:sum.y+34}];   // дорожка заканчивается у холмика флага
   let d=`M${pts[0].x},${pts[0].y}`;
   for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],my=(a.y+b.y)/2;d+=` C${a.x},${my} ${b.x},${my} ${b.x},${b.y}`}
-  const tp=trailPoints(pts,9),br=tp.reduce((b,q)=>Math.abs(q.y-385)<Math.abs(b.y-385)?q:b,tp[0]),bridge=Math.abs(br.y-385)<40?br:null;   // мостик там, где дорожка пересекает реку
-  let svg=`<svg class="route" viewBox="0 0 ${ROUTE_W} ${H}" width="100%" role="img" aria-label="Карта маршрута: ${n} заданий">`+sceneSvg(H,H0,bridge);
+  const tp=trailPoints(pts,9);
+  let svg=`<svg class="route" viewBox="0 0 ${ROUTE_W} ${H}" width="100%" role="img" aria-label="Карта маршрута: ${n} заданий">`+sceneSvg(H);
   // деревья по краям карты (за дорожкой и узлами)
   for(let y=390,i=0;y<H-30;y+=128,i++){const x=i%2?334:26;svg+=`<image href="${look.trees}" x="${x-24}" y="${y-28}" width="48" height="56" aria-hidden="true"/>`}
-  svg+=`<path d="${d}" fill="none" stroke="rgba(120,90,40,.18)" stroke-width="27" stroke-linecap="round"/>${trailSvg(tp,look.trail)}`;
+  svg+=`<path d="${d}" fill="none" stroke="rgba(60,90,30,.16)" stroke-width="27" stroke-linecap="butt"/>${trailSvg(tp,look.trail)}`;
   nodes.forEach((x,i)=>{const p=pos(i),c={DONE:COL.green,WAIT:COL.orange,CUR:COL.blue,OPEN:COL.white}[x.state];
     const mark=x.state==='DONE'?`<path d="M-12,0 L-4,8 L13,-9" fill="none" stroke="${COL.white}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`
       :x.state==='WAIT'?`<g transform="translate(-15,-15) scale(.0586)" color="${COL.white}" fill="currentColor">`+ICO['hourglass-outline']+'</g>'
