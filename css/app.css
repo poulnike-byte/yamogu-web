@@ -197,4 +197,7 @@ body.onboarding #app{padding-top:0;max-width:none}
 
 .wl-col{z-index:1}
 
-html.onboarding,html.app-starting{background-color:#50BFF4;background-image:linear-gradient(to bottom,#50BFF4 55%,var(--paper))}
+html.onboarding,html.app-starting{background-color:#E0F9FD;background-image:linear-gradient(to bottom,#E0F9FD 55%,var(--paper))}
+
+/* v43: clear sky reaches the top; controls and lower panel retain their layout. */
+.wl{background-color:#E0F9FD}.wl>.wl-bg{object-position:50% 0%}

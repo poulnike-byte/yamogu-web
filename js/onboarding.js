@@ -15,7 +15,7 @@ function onboardView(){
   const O=S.onb,st=O.step,kid=KIDS.find(k=>k.id===O.child);
   const dots=`<div role="img" aria-label="Шаг ${st+1} из 3" style="display:flex;gap:8px;justify-content:center;margin:6px 0 14px">${[0,1,2].map(i=>`<i style="width:${i===st?28:10}px;height:10px;border-radius:5px;background:${i===st?'var(--blue)':'var(--dot-off)'};display:block"></i>`).join('')}</div>`;
   const back=st>0?'<button class="gear" data-act="ob_back" aria-label="Назад">‹</button>':'';
-  if(st===0)return`<div class="wl"><img class="wl-bg" src="img/welcome_background.png" alt="" aria-hidden="true"><main class="wl-col" style="padding-bottom:calc(12px + env(safe-area-inset-bottom))">
+  if(st===0)return`<div class="wl"><img class="wl-bg" src="img/welcome_sky_v43.png" alt="" aria-hidden="true"><main class="wl-col" style="padding-bottom:calc(12px + env(safe-area-inset-bottom))">
     <img class="wl-logo" src="img/yamogu_logo.png" alt="ЯмогУ!"><p class="wl-slogan">Я пробую, я учусь, я могу</p><div class="wl-gap"></div>
     <section class="wl-actions"><p class="wl-benefit">Помогаем ребенку становиться самостоятельнее</p>
     <button class="btn full" data-act="ob_next">Начать</button><button class="wl-parent" data-act="ob_parent">Я родитель</button></section></main></div>`;
