@@ -342,7 +342,7 @@ async function freshPage(fn, routeFn) {
   try {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
     const page = await ctx.newPage();
-    if (routeFn) await page.route('**/img/dry-preview.webp*', routeFn);
+    if (routeFn) await page.route('**/img/welcome_sky_v43.png*', routeFn);
     await fn(page);
   } finally { await browser.close(); }
 }
