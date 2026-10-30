@@ -15,7 +15,7 @@ function onboardView(){
   const O=S.onb,st=O.step,kid=KIDS.find(k=>k.id===O.child);
   const dots=`<div role="img" aria-label="Шаг ${st+1} из 3" style="display:flex;gap:8px;justify-content:center;margin:6px 0 14px">${[0,1,2].map(i=>`<i style="width:${i===st?28:10}px;height:10px;border-radius:5px;background:${i===st?'var(--blue)':'var(--dot-off)'};display:block"></i>`).join('')}</div>`;
   const back=st>0?'<button class="gear" data-act="ob_back" aria-label="Назад">‹</button>':'';
-  if(st===0)return"<div class=\"wl wm-display\"><img class=\"wl-bg wm-preload\" src=\"img/dry-preview.webp\" alt=\"\" aria-hidden=\"true\"><main class=\"wm-stage\"><iframe src=\"moss-preview.html?v=51&app=1\" title=\"Сад ЯмогУ!\" tabindex=\"-1\" aria-hidden=\"true\"></iframe><button class=\"wm-start\" data-act=\"ob_next\" aria-label=\"Начать\"></button><button class=\"wm-parent\" data-act=\"ob_parent\" aria-label=\"Я родитель\"></button></main></div>";
+  if(st===0)return"<div class=\"wl wm-display\"><img class=\"wl-bg wm-preload\" src=\"img/dry-preview.webp\" alt=\"\" aria-hidden=\"true\"><main class=\"wm-stage\"><iframe src=\"moss-preview.html?v=52&app=1\" title=\"Сад ЯмогУ!\" tabindex=\"-1\" aria-hidden=\"true\"></iframe><button class=\"wm-start\" data-act=\"ob_next\" aria-label=\"Начать\"></button><button class=\"wm-parent\" data-act=\"ob_parent\" aria-label=\"Я родитель\"></button></main></div>";
   if(st===1){const ages=obAges(O.child);
     return`<main><div class="top">${back}<div class="hello"><b>Давай познакомимся!</b></div></div>${dots}
     <label>Как тебя зовут?</label><input id="ob-name" maxlength="${OB_NAME_MAX}" placeholder="${kid.name}" value="${esc(O.name)}" autocomplete="off">
