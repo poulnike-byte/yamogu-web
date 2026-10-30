@@ -219,3 +219,6 @@ html.onboarding,html.app-starting{background-color:#E0F9FD;background-image:line
 .wl .btn.full.wl-start{order:-1;height:100px;padding-bottom:17px}
 .wl-benefit{margin:10px auto 2px}
 @media(max-height:700px){.wl .btn.full.wl-start{height:96px}.wl-benefit{margin:8px auto 2px}}
+
+/* v46: recessed lettering, shadow above the cut and sunlight on its lower lip. */
+.wl .wl-engraved{display:block;font-size:28px;font-weight:900;letter-spacing:2px;line-height:1.15;color:#936642;text-shadow:0 -1px 1px #51351f,0 1px 0 #fff2cf,0 2px 1px rgba(255,226,174,.75);transform:perspective(400px) rotateX(16deg);pointer-events:none}
