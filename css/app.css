@@ -222,3 +222,10 @@ html.onboarding,html.app-starting{background-color:#E0F9FD;background-image:line
 
 /* v46: recessed lettering, shadow above the cut and sunlight on its lower lip. */
 .wl .wl-engraved{display:block;font-size:28px;font-weight:900;letter-spacing:2px;line-height:1.15;color:#936642;text-shadow:0 -1px 1px #51351f,0 1px 0 #fff2cf,0 2px 1px rgba(255,226,174,.75);transform:perspective(400px) rotateX(16deg);pointer-events:none}
+
+/* v47: approved carved stone; one finite water fill, no frame loop. */
+.wl .btn.full.wl-start{position:relative;display:block;aspect-ratio:3/1;height:auto;min-height:0;padding:0;background:none;animation:none;border-radius:18px}
+.wl-start img{display:block;width:100%;height:auto;pointer-events:none}
+.wl-start .wl-water{position:absolute;inset:0;clip-path:inset(50.5% var(--right) 49.5% var(--left));animation:carved-water 2400ms ease-in-out var(--delay) 1 both}
+@keyframes carved-water{from{clip-path:inset(50.5% var(--right) 49.5% var(--left))}to{clip-path:inset(21.5% var(--right) 49.5% var(--left))}}
+@media(prefers-reduced-motion:reduce){.wl-start .wl-water{animation:none;clip-path:inset(21.5% var(--right) 49.5% var(--left))}}
