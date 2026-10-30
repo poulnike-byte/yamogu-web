@@ -194,7 +194,7 @@ test('Желания: покупка с подтверждением, цель, 
 
 test('Онбординг: приветствие, знакомство, три навыка; повторно не показывается', async () => session(async s => {
   let p = s.page; await p.waitForFunction(() => S.onb);
-  assert.ok(await p.isVisible('text=Помогаем ребенку становиться самостоятельнее'), 'на чистом устройстве показывается приветствие');
+  assert.ok(await p.isVisible('.wm-stage iframe'), 'на чистом устройстве показывается анимированное приветствие');
   assert.ok(await p.isVisible('[data-act=ob_parent]'), 'есть кнопка «Я родитель»');
   assert.deepEqual(await p.evaluate(() => [
     getComputedStyle(document.querySelector('.wl-bg')).objectFit,
@@ -342,7 +342,7 @@ async function freshPage(fn, routeFn) {
   try {
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
     const page = await ctx.newPage();
-    if (routeFn) await page.route('**/img/welcome_sky_v43.png*', routeFn);
+    if (routeFn) await page.route('**/img/dry-preview.webp*', routeFn);
     await fn(page);
   } finally { await browser.close(); }
 }

@@ -229,3 +229,6 @@ html.onboarding,html.app-starting{background-color:#E0F9FD;background-image:line
 .wl-start .wl-water{position:absolute;inset:0;clip-path:inset(50.5% var(--right) 49.5% var(--left));animation:carved-water 2400ms ease-in-out var(--delay) 1 both}
 @keyframes carved-water{from{clip-path:inset(50.5% var(--right) 49.5% var(--left))}to{clip-path:inset(21.5% var(--right) 49.5% var(--left))}}
 @media(prefers-reduced-motion:reduce){.wl-start .wl-water{animation:none;clip-path:inset(21.5% var(--right) 49.5% var(--left))}}
+
+/* v51: approved phone animation is the real welcome screen */
+.wl.wm-display{display:grid;place-items:center;position:fixed;inset:0;overflow:hidden;background:#b9e4ed;padding:0}.wm-display .wm-preload{width:1px;height:1px;opacity:0;pointer-events:none}.wm-display .wm-stage{position:relative;height:100svh;width:min(100vw,calc(100svh * 853 / 1844));padding:0;margin:0;max-width:none;min-height:0}.wm-stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.wm-stage button{position:absolute;z-index:2;background:transparent;border:0;border-radius:20px;padding:0;cursor:pointer}.wm-stage .wm-start{left:4%;width:92%;top:74%;height:14%}.wm-stage .wm-parent{left:25%;width:50%;top:88%;height:7%}.wm-stage button:focus-visible{outline:3px solid #335b30;outline-offset:2px}
