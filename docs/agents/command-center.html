@@ -27,19 +27,53 @@ button{border:1px solid #cdd9ea;border-radius:10px;background:#f8fbff;color:#2f5
 small{color:#7488a1;line-height:1.6}.foot{font-size:12px;color:#6f849b;margin-top:22px}
 @media(max-width:980px){.shell{display:block}aside{padding:16px;display:flex;align-items:center;justify-content:space-between}.brand{max-width:140px;margin:0}.nav{display:flex;flex-wrap:wrap}.sidefoot{display:none}.grid{grid-template-columns:1fr}}
 @media(max-width:650px){main{padding:23px 16px}h1{font-size:27px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.roles{grid-template-columns:1fr}.nav a{font-size:12px;padding:8px}}
+
+#live-monitor .livebar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.livepill{font-size:13px;border-radius:99px;background:#eaf3fe;color:#37608a;padding:7px 13px;font-weight:700}
+.livepill.offline{background:#fef0e3;color:#9c5a22}.livepill.online{background:#e6f8eb;color:#277347}
+.live-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.live-agent{padding:14px;border:1px solid #e7edf5;border-radius:13px;min-height:98px}
+.live-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.live-name{font-weight:750;font-size:14px}.state{font-size:11px;font-weight:700;border-radius:50px;padding:5px 8px;background:#f2f5f9;color:#71839a}
+.state.running{background:#dff7ec;color:#13734b}.state.finished{background:#ddf7ea;color:#177448}
+.state.failed,.state.interrupted{background:#fde6e6;color:#ac3535}
+.live-agent small{display:block;margin:8px 0 10px}
+.track{height:7px;border-radius:20px;background:#edf1f6;overflow:hidden}
+.fill{height:100%;background:#69a5dc;border-radius:20px;transition:width .4s}
+.live-agent[data-live="running"] .fill{background:#46b887;animation:loading 2s ease-in-out infinite alternate}
+@keyframes loading{from{opacity:.45}to{opacity:1}}
+#live-events li{margin:8px 0;color:#536b83;font-size:13px;line-height:1.5}
+@media(max-width:650px){.live-grid{grid-template-columns:1fr}}
+
 </style></head><body>
 <div class="shell"><aside><div><div class="brand"><img alt="Логотип ЯмогУ!" src="data:image/webp;base64,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"></div>
 <nav class="nav"><a href="#overview">Обзор</a><a href="#activity">История запусков</a><a href="#team">Команда агентов</a><a href="#checks">Проверки и GitHub</a></nav></div>
 <div class="sidefoot">ЯмогУ! · Центр управления v2<br>Без публикации и фоновых обещаний</div></aside>
 <main id="overview"><div class="kicker">Центр управления · проект ЯмогУ!</div><h1>Команда ИИ-агентов</h1>
-<p class="lead">Здесь видно, кто действительно запускался, что проверено и какие роли пока существуют только как инструкции. Это подтверждённый снимок работы, а не прямая трансляция с ноутбука.</p>
+<p class="lead">История показывает прошлые проверки. Блок Live при открытии через локальный сервер показывает фактические запуски и их состояние.</p>
 <div class="stats">
 <div class="stat"><strong>0</strong><span>Фоновых AI-процессов подтверждено</span></div>
 <div class="stat"><strong>2</strong><span>Проверенных запуска/процесса</span></div>
 <div class="stat"><strong>17/17</strong><span>Тестов приложения пройдено</span></div>
 <div class="stat"><strong>7</strong><span>Ролей в команде</span></div>
 </div>
-<div class="note"><strong>Текущий режим:</strong> запуск по команде. Codex-программист и QA уже запускались и завершили работу. Другие роли ещё не запускались. <strong>Онлайн-мониторинг пока не подключён.</strong><br><small>Последний подтверждённый снимок: 31.10.2026 16:01 (местное время ноутбука).</small></div>
+
+<section id="live-monitor" class="panel" aria-label="Живой мониторинг">
+  <div class="livebar">
+    <div><h2 style="margin-bottom:5px">Работа агентов · Live</h2>
+      <small>Проверка локального сервиса каждые 3 секунды. Статус основан на запуске процесса.</small></div>
+    <div><span class="livepill offline" id="live-connection">Нет соединения</span>
+      <button id="live-refresh" type="button">Обновить</button></div>
+  </div>
+  <div class="live-grid" id="live-agents">
+    <p>Подключение к локальному монитору…</p>
+  </div>
+  <h3 style="margin-top:20px">Последние действия</h3>
+  <ol id="live-events"><li>Нет подтверждённых событий мониторинга.</li></ol>
+  <small id="live-timestamp">Откройте страницу с адреса http://127.0.0.1:8765 — не как локальный HTML-файл.</small>
+</section>
+
+<div class="note"><strong>Текущий режим:</strong> запуск по команде. Codex-программист и QA уже запускались и завершили работу. Другие роли ещё не запускались. <strong>Онлайн-мониторинг запускается через локальный сервер и видит только задачи, запущенные с журналированием.</strong><br><small>Последний подтверждённый снимок: 31.10.2026 16:01 (местное время ноутбука).</small></div>
 <div class="grid">
 <section class="panel" id="activity"><h2>История запусков</h2>
 <ol class="timeline">
@@ -59,5 +93,66 @@ small{color:#7488a1;line-height:1.6}.foot{font-size:12px;color:#6f849b;margin-to
 <small>Записи об успешных проверках отражают конкретный запуск, не гарантируют прохождение будущих тестов или правовую готовность релиза.</small></section>
 </div>
 <section class="panel" id="team"><h2>Состав команды</h2><div class="roles"><article class="role"><div class="rolehead"><h3>Координатор</h3><span class="tag ready">Настроен</span></div><p>Описаны правила, приоритеты и передача задач.</p></article><article class="role"><div class="rolehead"><h3>Программист</h3><span class="tag done">Запуск завершён</span></div><p>Codex A-02 реально запускался в режиме чтения.</p></article><article class="role"><div class="rolehead"><h3>Тестировщик</h3><span class="tag done">Проверка завершена</span></div><p>A-04: legal gate PASS, тесты 17 из 17.</p></article><article class="role"><div class="rolehead"><h3>UX-дизайнер</h3><span class="tag pending">Не запускался</span></div><p>Возрастные темы и дизайн впереди.</p></article><article class="role"><div class="rolehead"><h3>Безопасность</h3><span class="tag pending">Не запускался</span></div><p>Аудит доступа к фото и детским данным впереди.</p></article><article class="role"><div class="rolehead"><h3>Юридический скрининг</h3><span class="tag pending">Не запускался</span></div><p>AI не заменяет юриста, релиз заблокирован без согласования.</p></article><article class="role"><div class="rolehead"><h3>Аналитик</h3><span class="tag pending">Не запускался</span></div><p>История метрик и план-график впереди.</p></article></div></section>
-<p class="foot">ЯмогУ! · Следующий шаг: связать журнал исполнений с веб-панелью через контролируемый локальный сервис. До этого новая версия панели не показывает процессы в реальном времени.</p>
-</main></div></body></html>
+<p class="foot">ЯмогУ! · Live работает только при запуске локального сервера на ноутбуке; открытия сохранённого HTML-файла недостаточно.</p>
+</main></div>
+<script>
+(() => {
+  'use strict';
+  const map={developer:'Программист',qa:'Тестировщик',designer:'Дизайнер',security:'Безопасность',legal:'Юридический скрининг',analyst:'Аналитик',coordinator:'Координатор'};
+  const meanings={running:'Работает сейчас',finished:'Завершил задачу',failed:'Ошибка запуска',interrupted:'Прервано',not_started:'Не запускался'};
+  const box=document.getElementById('live-agents'), events=document.getElementById('live-events');
+  const label=document.getElementById('live-connection'), timestamp=document.getElementById('live-timestamp');
+  const el=(name,cls,text)=>{
+    const x=document.createElement(name);
+    if(cls)x.className=cls;
+    if(text!=null)x.textContent=text;
+    return x;
+  };
+  function refreshOne(key,data,max) {
+    const role=el('div','live-agent');role.dataset.live=data.state;
+    const heading=el('div','live-top');
+    heading.append(el('span','live-name',map[key]||key),el('span','state '+data.state,meanings[data.state]||'Нет данных'));
+    role.append(heading);
+    const last=data.last;
+    const note=last?
+      ('Задача '+last.task+' · запусков: '+data.total+' · завершено: '+data.completed+
+       (data.state==='running'?' · '+last.durationSeconds+' сек.':''))
+      : 'Нет зарегистрированных запусков';
+    role.append(el('small','',note));
+    const track=el('div','track'), fill=el('div','fill');
+    fill.style.width=String(max>0?Math.max(0,Math.round((data.completed/max)*100)):0)+'%';
+    track.append(fill);role.append(track);
+    return role;
+  }
+  async function load() {
+    try {
+      if(location.protocol==='file:')throw Error('Файл без локального сервера');
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),2000);
+      let response;
+      try {response=await fetch('/api/status',{signal:controller.signal,cache:'no-store'});}
+      finally {clearTimeout(timer);}
+      if(!response.ok)throw Error('HTTP '+response.status);
+      const data=await response.json();
+      label.textContent='Монитор подключён';label.className='livepill online';
+      const max=Math.max(1,...Object.values(data.roles).map(r=>r.completed));
+      box.replaceChildren(...Object.entries(data.roles).map(([key,value])=>refreshOne(key,value,max)));
+      const recent=data.recent.slice(0,8).map(run=>{
+        const name=map[run.role]||run.role;
+        return el('li','',name+' · '+run.task+' · '+(meanings[run.state]||run.state)+' · '+new Date(run.lastAt).toLocaleString('ru-RU'));
+      });
+      events.replaceChildren(...(recent.length?recent:[el('li','','Пока нет зарегистрированных запусков. Запускайте задачи через monitor-run.ps1.')]));
+      timestamp.textContent='Проверено: '+new Date(data.serverTime).toLocaleString('ru-RU')+
+        '. Полосы показывают число успешно завершённых запусков, не процент выполнения задач.';
+    } catch(e) {
+      label.textContent='Монитор недоступен';label.className='livepill offline';
+      box.replaceChildren(el('p','','Нет достоверного состояния. Для живых статусов запустите локальный сервер и откройте http://127.0.0.1:8765.'));
+      events.replaceChildren(el('li','','Нет подключения к журналу запусков.'));
+      timestamp.textContent='Статус агентов неизвестен, пока монитор отключён.';
+    }
+  }
+  document.getElementById('live-refresh').addEventListener('click',load);
+  load();setInterval(load,3000);
+})();
+</script>
+</body></html>
