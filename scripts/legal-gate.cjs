@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..');
 const arg=process.argv.find(x=>x.startsWith('--base='));const base=arg?.slice(7);
 function git(args){return cp.execFileSync('git',args,{cwd:root,encoding:'utf8'}).trim()}
 let changed;
-try{changed=(base?git(['diff','--name-only',base+'...HEAD']):git(['status','--porcelain','--untracked-files=all']).split('\n').filter(Boolean).map(x=>x.slice(3))).filter(Boolean)}catch(e){console.error('BLOCK: cannot determine changed files:',e.message);process.exit(2)}
+try{changed=(base?git(['diff','--name-only',base+'...HEAD']).split('\n'):git(['status','--porcelain','--untracked-files=all']).split('\n').filter(Boolean).map(x=>x.slice(3))).filter(Boolean)}catch(e){console.error('BLOCK: cannot determine changed files:',e.message);process.exit(2)}
 const files=[...new Set(changed.map(x=>x.replace(/\\/g,'/')))];
 const source=files.filter(f=>/^(js\/|server\/|css\/|index\.html|sw\.js|manifest\.|img\/|icons\/)/.test(f));
 const sensitive=source.filter(f=>/^(server\/|js\/(photos|app|parent|storage|wishes|backup|onboarding)\.js|index\.html|sw\.js)/.test(f));
