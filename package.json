@@ -2,6 +2,6 @@
   "name": "yamogu-web",
   "private": true,
   "description": "ЯмогУ! — веб-версия. package.json нужен только для автопроверок: приложение работает без сборки.",
-  "scripts": { "test": "node --test --test-timeout=60000 tests/app.test.mjs" },
+  "scripts": { "test": "node --test --test-timeout=60000 tests/app.test.mjs", "check:legal": "node scripts/legal-gate.cjs", "check:release": "node scripts/legal-gate.cjs --release" },
   "devDependencies": { "playwright-core": "1.64.1" }
 }

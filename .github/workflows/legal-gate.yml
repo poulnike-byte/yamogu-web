@@ -1,0 +1,24 @@
+name: Regulatory gate
+on:
+  pull_request:
+  push:
+    branches: [main, photo-reports-beget]
+  workflow_dispatch:
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify documentation and review
+        run: node scripts/legal-gate.cjs --base=HEAD~1
+      - name: Require human legal approval before merge into main
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: node scripts/legal-gate.cjs --release --base=${{ github.event.pull_request.base.sha }}
+      - name: Require human legal approval for main releases
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: node scripts/legal-gate.cjs --release --base=HEAD~1
