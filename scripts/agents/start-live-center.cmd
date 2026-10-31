@@ -1,9 +1,13 @@
 @echo off
-title Yamogu - Live Agent Monitor
+title Yamogu - Agent Command Center
 cd /d "%~dp0..\.."
-echo Live center starting on http://127.0.0.1:8765
-echo Close this window to stop the local monitor.
-start "" /b powershell.exe -NoProfile -Command "Start-Sleep -Seconds 2; Start-Process 'http://127.0.0.1:8765/'"
-node "scripts\agents\live-center.cjs"
-echo Monitor stopped or failed. Check Node.js and port 8765.
+powershell.exe -NoProfile -Command "try { $null=Invoke-WebRequest -Uri 'http://127.0.0.1:18766/api/status' -TimeoutSec 2 -UseBasicParsing; exit 0 } catch { exit 1 }"
+if not errorlevel 1 (
+  start "" "http://127.0.0.1:18766/"
+  exit /b 0
+)
+echo [Yamogu] Starting the supervisor on http://127.0.0.1:18766
+start "" /b powershell.exe -NoProfile -Command "Start-Sleep -Seconds 2; Start-Process 'http://127.0.0.1:18766/'"
+node "scripts\agents\agent-supervisor.cjs"
+echo [Yamogu] Supervisor stopped or port busy.
 pause

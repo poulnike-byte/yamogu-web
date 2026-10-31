@@ -4,10 +4,11 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
-const PORT = Number(process.env.YAMOGU_CENTER_PORT || 8765);
+const PORT = Number(process.env.YAMOGU_CENTER_PORT || 18766);
 const root = path.resolve(__dirname, '../..');
 const page = path.join(root, 'docs/agents/command-center.html');
-const store = path.join(os.tmpdir(), 'yamogu-agent-monitor', 'events.jsonl');
+const stateDir = process.env.YAMOGU_AGENT_STATE_DIR || path.join(os.tmpdir(), 'yamogu-agent-monitor');
+const store = path.join(stateDir, 'events.jsonl');
 const roles = ['developer', 'qa', 'designer', 'security', 'legal', 'analyst', 'coordinator'];
 function alive(pid) {
   if (!Number.isInteger(pid) || pid < 1) return false;
@@ -21,7 +22,7 @@ function compute() {
     try {
       const ev=JSON.parse(line);
       if (!roles.includes(ev.role) || !/^[A-Z]-\d{2,3}$/.test(ev.task || '')) return [];
-      if (!['running','finished','failed'].includes(ev.state)) return [];
+      if (!['running','finished','failed','blocked'].includes(ev.state)) return [];
       return [ev];
     } catch { return []; }
   });
@@ -48,7 +49,11 @@ function compute() {
     const last = history[0] || null;
     return [role, { state: running ? 'running' : last?.state || 'not_started', last, completed: history.filter(x => x.state === 'finished').length, failures: history.filter(x => ['failed','interrupted'].includes(x.state)).length, total: history.length }];
   }));
-  return { serverTime: new Date().toISOString(), source: 'local-process-events', roles: result, recent: runs.slice(0,12) };
+  let supervisor = {state:'not_started', lastHeartbeat:null};
+  try { supervisor = JSON.parse(fs.readFileSync(path.join(stateDir,'supervisor.json'),'utf8')); }
+  catch(e) { if(e.code!=='ENOENT') supervisor={state:'unavailable',lastHeartbeat:null}; }
+  if (!supervisor.lastHeartbeat || Date.now()-Date.parse(supervisor.lastHeartbeat)>75000) supervisor.state='offline';
+  return { serverTime: new Date().toISOString(), source: 'local-process-events', supervisor, roles: result, recent: runs.slice(0,12) };
 }
 const server=http.createServer((req,res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
@@ -66,6 +71,9 @@ const server=http.createServer((req,res) => {
   res.writeHead(404);res.end('Not found');
 });
 if (require.main === module) {
-  server.listen(PORT, '127.0.0.1', () => console.log('YAMOGU_LIVE_CENTER http://127.0.0.1:' + PORT));
+  startServer();
 }
-module.exports = { compute };
+function startServer() {
+  return server.listen(PORT, '127.0.0.1', () => console.log('YAMOGU_LIVE_CENTER http://127.0.0.1:' + PORT));
+}
+module.exports = { compute, startServer };

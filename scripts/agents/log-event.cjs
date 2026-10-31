@@ -2,8 +2,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
-const validRoles = ['developer', 'qa'];
-const validStates = ['running', 'finished', 'failed'];
+const validRoles = ['developer', 'qa', 'security', 'coordinator', 'designer', 'legal', 'analyst'];
+const validStates = ['running', 'finished', 'failed', 'blocked'];
 const [role, task, state, pidArg, runId] = process.argv.slice(2);
 if (!validRoles.includes(role) || !/^[A-Z]-\d{2,3}$/.test(task || '') ||
     !validStates.includes(state) || !/^\d{1,10}$/.test(pidArg || '') ||

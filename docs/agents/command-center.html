@@ -28,6 +28,7 @@ small{color:#7488a1;line-height:1.6}.foot{font-size:12px;color:#6f849b;margin-to
 @media(max-width:980px){.shell{display:block}aside{padding:16px;display:flex;align-items:center;justify-content:space-between}.brand{max-width:140px;margin:0}.nav{display:flex;flex-wrap:wrap}.sidefoot{display:none}.grid{grid-template-columns:1fr}}
 @media(max-width:650px){main{padding:23px 16px}h1{font-size:27px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.roles{grid-template-columns:1fr}.nav a{font-size:12px;padding:8px}}
 
+.state.blocked{background:#fef0e3;color:#ac611e}
 #live-monitor .livebar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .livepill{font-size:13px;border-radius:99px;background:#eaf3fe;color:#37608a;padding:7px 13px;font-weight:700}
 .livepill.offline{background:#fef0e3;color:#9c5a22}.livepill.online{background:#e6f8eb;color:#277347}
@@ -52,7 +53,7 @@ small{color:#7488a1;line-height:1.6}.foot{font-size:12px;color:#6f849b;margin-to
 <main id="overview"><div class="kicker">Центр управления · проект ЯмогУ!</div><h1>Команда ИИ-агентов</h1>
 <p class="lead">История показывает прошлые проверки. Блок Live при открытии через локальный сервер показывает фактические запуски и их состояние.</p>
 <div class="stats">
-<div class="stat"><strong>0</strong><span>Фоновых AI-процессов подтверждено</span></div>
+<div class="stat"><strong id="current-active">—</strong><span>Активных проверок сейчас (данные Live)</span></div>
 <div class="stat"><strong>2</strong><span>Проверенных запуска/процесса</span></div>
 <div class="stat"><strong>17/17</strong><span>Тестов приложения пройдено</span></div>
 <div class="stat"><strong>7</strong><span>Ролей в команде</span></div>
@@ -70,7 +71,7 @@ small{color:#7488a1;line-height:1.6}.foot{font-size:12px;color:#6f849b;margin-to
   </div>
   <h3 style="margin-top:20px">Последние действия</h3>
   <ol id="live-events"><li>Нет подтверждённых событий мониторинга.</li></ol>
-  <small id="live-timestamp">Откройте страницу с адреса http://127.0.0.1:8765 — не как локальный HTML-файл.</small>
+  <small id="live-timestamp">Откройте страницу с адреса http://127.0.0.1:18766 — не как локальный HTML-файл.</small>
 </section>
 
 <div class="note"><strong>Текущий режим:</strong> запуск по команде. Codex-программист и QA уже запускались и завершили работу. Другие роли ещё не запускались. <strong>Онлайн-мониторинг запускается через локальный сервер и видит только задачи, запущенные с журналированием.</strong><br><small>Последний подтверждённый снимок: 31.10.2026 16:01 (местное время ноутбука).</small></div>
@@ -99,7 +100,7 @@ small{color:#7488a1;line-height:1.6}.foot{font-size:12px;color:#6f849b;margin-to
 (() => {
   'use strict';
   const map={developer:'Программист',qa:'Тестировщик',designer:'Дизайнер',security:'Безопасность',legal:'Юридический скрининг',analyst:'Аналитик',coordinator:'Координатор'};
-  const meanings={running:'Работает сейчас',finished:'Завершил задачу',failed:'Ошибка запуска',interrupted:'Прервано',not_started:'Не запускался'};
+  const meanings={running:'Работает сейчас',finished:'Завершил задачу',failed:'Ошибка запуска',blocked:'Есть риски',interrupted:'Прервано',not_started:'Не запускался'};
   const box=document.getElementById('live-agents'), events=document.getElementById('live-events');
   const label=document.getElementById('live-connection'), timestamp=document.getElementById('live-timestamp');
   const el=(name,cls,text)=>{
@@ -134,7 +135,11 @@ small{color:#7488a1;line-height:1.6}.foot{font-size:12px;color:#6f849b;margin-to
       finally {clearTimeout(timer);}
       if(!response.ok)throw Error('HTTP '+response.status);
       const data=await response.json();
-      label.textContent='Монитор подключён';label.className='livepill online';
+      const running=Object.values(data.roles).filter(r=>r.state==='running').length;
+      document.getElementById('current-active').textContent=String(running);
+      const up=data.supervisor?.state==='online';
+      label.textContent=up?'Диспетчер работает':'Диспетчер не активен';
+      label.className=up?'livepill online':'livepill offline';
       const max=Math.max(1,...Object.values(data.roles).map(r=>r.completed));
       box.replaceChildren(...Object.entries(data.roles).map(([key,value])=>refreshOne(key,value,max)));
       const recent=data.recent.slice(0,8).map(run=>{
@@ -145,8 +150,9 @@ small{color:#7488a1;line-height:1.6}.foot{font-size:12px;color:#6f849b;margin-to
       timestamp.textContent='Проверено: '+new Date(data.serverTime).toLocaleString('ru-RU')+
         '. Полосы показывают число успешно завершённых запусков, не процент выполнения задач.';
     } catch(e) {
+      document.getElementById('current-active').textContent='—';
       label.textContent='Монитор недоступен';label.className='livepill offline';
-      box.replaceChildren(el('p','','Нет достоверного состояния. Для живых статусов запустите локальный сервер и откройте http://127.0.0.1:8765.'));
+      box.replaceChildren(el('p','','Нет достоверного состояния. Для живых статусов запустите локальный сервер и откройте http://127.0.0.1:18766.'));
       events.replaceChildren(el('li','','Нет подключения к журналу запусков.'));
       timestamp.textContent='Статус агентов неизвестен, пока монитор отключён.';
     }

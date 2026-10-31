@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "description": "Always-on dispatcher polls every 30 s; only approved read-only jobs run. Changed inputs cause a run; otherwise repeat at most every 6 hours.",
+  "jobs": {
+    "security": {"enabled": true, "taskId": "A-05", "mode": "read-only"},
+    "qa": {"enabled": true, "taskId": "A-04", "mode": "read-only"},
+    "developer": {"enabled": false, "reason": "Automatic code editing requires isolated task-specific worktrees and QA review."},
+    "designer": {"enabled": false},
+    "legal": {"enabled": false}
+  }
+}
